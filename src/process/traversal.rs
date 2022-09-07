@@ -4,6 +4,7 @@ use super::*;
 
 #[derive(Serialize, Debug, Clone)]
 pub struct Bytecode {
+    #[serde(rename = "step")]
     steps: Vec<Vec<StepValue>>,
 }
 
