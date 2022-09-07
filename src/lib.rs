@@ -5,7 +5,7 @@ pub mod structure;
 
 #[cfg(test)]
 mod tests {
-    use crate::*;
+    use crate::{structure::Vertex, *};
     use serde_json::to_string_pretty;
     use std::env;
     use tokio::time::{timeout, Duration};
@@ -31,17 +31,20 @@ mod tests {
             let client = driver::Client::new(&test_url).await.unwrap();
             let mut g = process::traversal::Traversal::new();
 
+            println!("testing query execution...");
             let result = timeout(
                 Duration::from_secs(5),
-                g.V::<String>(&[])
-                    .hasLabel(&["user"])
-                    .elementMap::<String>(&[])
-                    .execute(&client),
+                g.V::<String>(&[]).sample(&[1]).execute(&client),
             )
             .await
+            .unwrap()
             .unwrap();
 
-            println!("{:?}", &result.unwrap());
+            println!("{:?}", &result);
+
+            println!("testing response data parsing");
+            let v: Vec<Vertex> = result.parse().unwrap();
+            println!("{:?}", &v);
         } else {
             println!("integration test not run, missing TEST_URL env var")
         }

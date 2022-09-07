@@ -138,14 +138,15 @@ impl Client {
         spawn(async move {
             while let Some(res) = stream.next().await {
                 if let Ok(Message::Binary(bin)) = res {
-                    if let Ok(response) = from_slice::<GremlinResponse>(&bin[..]).map_err(|e| {
-                        #[cfg(test)]
-                        {
-                            println!("error parsing gremlin response: {}", e);
-                            println!("response data: {}", String::from_utf8(bin).unwrap());
-                        }
-                    }) {
+                    if let Ok(response) = from_slice::<GremlinResponse>(&bin[..]) {
                         tx_clone.send(Ws(response)).unwrap()
+                    } else {
+                        #[cfg(test)]
+                        println!(
+                            "error parsing response:\n{}\nserde_error:\n{}",
+                            String::from_utf8(bin.clone()).unwrap(),
+                            from_slice::<GremlinResponse>(&bin[..]).unwrap_err()
+                        )
                     }
                 } else {
                     #[cfg(test)]
