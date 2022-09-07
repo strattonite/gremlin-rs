@@ -103,6 +103,11 @@ impl Into<Message> for GremlinRequest {
     fn into(self) -> Message {
         let mut data = b"!application/vnd.gremlin-v2.0+json".to_vec();
         data.append(&mut to_vec(&self).unwrap());
+        #[cfg(test)]
+        println!(
+            "sending request:\n{}",
+            String::from_utf8(data.clone()).unwrap()
+        );
         Message::Binary(data)
     }
 }
@@ -118,6 +123,9 @@ use EventType::*;
 
 impl Client {
     pub async fn new(url: &str) -> Result<Self, ClientError> {
+        #[cfg(test)]
+        println!("client connecting to websocket url: {}", url);
+
         let (wss, _) = connect_async_tls_with_config(url, None, None).await?;
 
         let (mut sink, mut stream) = wss.split();
@@ -132,7 +140,16 @@ impl Client {
                 if let Ok(Message::Binary(bin)) = res {
                     if let Ok(response) = from_slice::<GremlinResponse>(&bin[..]) {
                         tx_clone.send(Ws(response)).unwrap()
+                    } else {
+                        #[cfg(test)]
+                        println!(
+                            "received invalid data from gremlin server:\n{}",
+                            String::from_utf8(bin).unwrap()
+                        )
                     }
+                } else {
+                    #[cfg(test)]
+                    println!("recieved invalid message type from websocket:\n{:?}", res)
                 }
             }
         });
@@ -171,6 +188,8 @@ impl Client {
                         };
                     }
                     Kill => {
+                        #[cfg(test)]
+                        println!("kill signal received");
                         rx_stream.close();
                         sink.send(Message::Close(None)).await.unwrap();
                         for (_, (_, sender)) in pending.drain() {
@@ -184,11 +203,18 @@ impl Client {
             }
         });
 
+        #[cfg(test)]
+        println!("created main client");
+
         Ok(Client { tx, main: true })
     }
 
     pub async fn execute(&self, query: Traversal) -> Result<ClientResponse, ClientError> {
         let bytecode: Bytecode = query.into();
+
+        #[cfg(test)]
+        println!("sending bytecode for execution: {:?}", &bytecode);
+
         let (os_tx, os_rx) = oneshot::channel();
         if let Err(_) = self.tx.send(Rx((bytecode, os_tx))) {
             return Err(ClientError::ExecutionError);
@@ -212,6 +238,9 @@ impl Clone for Client {
 impl Drop for Client {
     fn drop(&mut self) {
         if self.main {
+            #[cfg(test)]
+            println!("killing main client");
+
             self.tx.send(Kill).unwrap()
         }
     }
