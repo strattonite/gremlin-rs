@@ -8,6 +8,7 @@ mod tests {
     use crate::*;
     use serde_json::to_string_pretty;
     use std::env;
+    use tokio::time::{timeout, Duration};
 
     #[test]
     fn test_traversal_serialization() {
@@ -29,15 +30,18 @@ mod tests {
         if let Ok(test_url) = env::var("TEST_URL") {
             let client = driver::Client::new(&test_url).await.unwrap();
             let mut g = process::traversal::Traversal::new();
-            let result = g
-                .V::<String>(&[])
-                .hasLabel(&["user"])
-                .elementMap::<String>(&[])
-                .execute(&client)
-                .await
-                .unwrap();
 
-            println!("{:?}", &result);
+            let result = timeout(
+                Duration::from_secs(5),
+                g.V::<String>(&[])
+                    .hasLabel(&["user"])
+                    .elementMap::<String>(&[])
+                    .execute(&client),
+            )
+            .await
+            .unwrap();
+
+            println!("{:?}", &result.unwrap());
         } else {
             println!("integration test not run, missing TEST_URL env var")
         }
