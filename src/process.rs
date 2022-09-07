@@ -193,6 +193,7 @@ pub enum StepValue {
     String(String),
     Process(Process),
     Literal(GValue),
+    Null,
 }
 
 impl From<String> for StepValue {
@@ -246,6 +247,12 @@ impl From<i32> for StepValue {
 impl From<i64> for StepValue {
     fn from(v: i64) -> Self {
         Into::<GValue>::into(v).into()
+    }
+}
+
+impl From<()> for StepValue {
+    fn from(_: ()) -> Self {
+        StepValue::Null
     }
 }
 

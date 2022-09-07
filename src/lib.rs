@@ -15,7 +15,7 @@ mod tests {
         let mut g = process::traversal::Traversal::new();
         let mut g2 = process::traversal::Traversal::new();
 
-        g.V(&["USER_ID"])
+        g.V(&[()])
             .addE(&["edge_label"])
             .to(&[g2.V(&["ANOTHER_USER_ID"]).to_owned()])
             .id();
@@ -34,7 +34,7 @@ mod tests {
             println!("testing query execution...");
             let result = timeout(
                 Duration::from_secs(5),
-                g.V::<String>(&[]).sample(&[1]).execute(&client),
+                g.V(&[()]).sample(&[1]).to_list(&client),
             )
             .await
             .unwrap()

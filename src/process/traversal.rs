@@ -13,7 +13,11 @@ impl Bytecode {
         Bytecode { steps: Vec::new() }
     }
     pub fn add_step(&mut self, s: Vec<StepValue>) {
-        self.steps.push(s)
+        self.steps.push(
+            s.into_iter()
+                .filter(|v| !matches!(v, StepValue::Null))
+                .collect(),
+        )
     }
 }
 
@@ -42,7 +46,7 @@ impl Traversal {
         }
     }
 
-    pub async fn execute(&mut self, client: &Client) -> Result<ClientResponse, ClientError> {
+    pub async fn to_list(&mut self, client: &Client) -> Result<ClientResponse, ClientError> {
         client.execute(self.to_owned()).await
     }
 
