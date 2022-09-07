@@ -249,15 +249,20 @@ impl Drop for Client {
 
 #[cfg(test)]
 mod tests {
-    use crate::*;
+    use crate::process::traversal::{Bytecode, Traversal};
     use serde_json::to_string_pretty;
 
     use super::GremlinRequest;
     #[test]
     fn test_request_serialization() {
-        let mut bytecode = process::traversal::Bytecode::new();
-        bytecode.add_step(vec!["addV".into(), "user".into()]);
-        let request = GremlinRequest::new(bytecode);
+        let g = Traversal::new();
+        let mut __ = Traversal::new();
+        let bt: Bytecode = g
+            .V(())
+            .addE("user")
+            .to(__.V(()).hasLabel(("user", "workout")))
+            .into();
+        let request = GremlinRequest::new(bt);
         println!("{}", to_string_pretty(&request).unwrap())
     }
 }

@@ -250,12 +250,6 @@ impl From<i64> for StepValue {
     }
 }
 
-impl From<()> for StepValue {
-    fn from(_: ()) -> Self {
-        StepValue::Null
-    }
-}
-
 impl From<Traversal> for StepValue {
     fn from(v: Traversal) -> Self {
         let b: Bytecode = v.into();
@@ -263,3 +257,68 @@ impl From<Traversal> for StepValue {
         p.into()
     }
 }
+
+impl<T: Into<StepValue> + Clone> From<&T> for StepValue {
+    fn from(v: &T) -> Self {
+        Into::<StepValue>::into(v.clone())
+    }
+}
+
+pub struct Step(Vec<StepValue>);
+
+impl Step {
+    pub fn operator(mut self, op: &str) -> Vec<StepValue> {
+        self.0.insert(0, op.into());
+        self.0
+    }
+    pub fn no_arg(op: &str) -> Vec<StepValue> {
+        vec![op.into()]
+    }
+}
+
+impl From<()> for Step {
+    fn from(_: ()) -> Self {
+        Step(Vec::new())
+    }
+}
+
+impl From<&str> for Step {
+    fn from(s: &str) -> Self {
+        Step(vec![s.into()])
+    }
+}
+
+impl From<Traversal> for Step {
+    fn from(t: Traversal) -> Self {
+        Step(vec![t.into()])
+    }
+}
+
+macro_rules! test_macro {
+    ($($T:ident),+) => {
+        impl <$($T: Into<StepValue>),+> Into<Step> for ($($T,)+) {
+            fn into(self) -> Step {
+                let mut v = Vec::new();
+                let (
+                    $($T,)+
+                ) = self;
+                $(
+                    v.push($T.into());
+                )+
+                Step(v)
+            }
+        }
+    };
+}
+test_macro![T0];
+test_macro![T0, T1];
+test_macro![T0, T1, T2];
+test_macro![T0, T1, T2, T3];
+test_macro![T0, T1, T2, T3, T4];
+test_macro![T0, T1, T2, T3, T4, T5];
+test_macro![T0, T1, T2, T3, T4, T5, T6];
+test_macro![T0, T1, T2, T3, T4, T5, T6, T7];
+test_macro![T0, T1, T2, T3, T4, T5, T6, T7, T8];
+test_macro![T0, T1, T2, T3, T4, T5, T6, T7, T8, T9];
+test_macro![T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10];
+test_macro![T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11];
