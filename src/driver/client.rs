@@ -138,14 +138,14 @@ impl Client {
         spawn(async move {
             while let Some(res) = stream.next().await {
                 if let Ok(Message::Binary(bin)) = res {
-                    if let Ok(response) = from_slice::<GremlinResponse>(&bin[..]) {
-                        tx_clone.send(Ws(response)).unwrap()
-                    } else {
+                    if let Ok(response) = from_slice::<GremlinResponse>(&bin[..]).map_err(|e| {
                         #[cfg(test)]
-                        println!(
-                            "received invalid data from gremlin server:\n{}",
-                            String::from_utf8(bin).unwrap()
-                        )
+                        {
+                            println!("error parsing gremlin response: {}", e);
+                            println!("response data: {}", String::from_utf8(bin).unwrap());
+                        }
+                    }) {
+                        tx_clone.send(Ws(response)).unwrap()
                     }
                 } else {
                     #[cfg(test)]
