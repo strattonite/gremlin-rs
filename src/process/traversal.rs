@@ -47,8 +47,8 @@ impl Traversal {
         }
     }
 
-    pub async fn to_list(&mut self, client: &Client) -> Result<ClientResponse, ClientError> {
-        client.execute(self.to_owned()).await
+    pub async fn to_list(self, client: &Client) -> Result<ClientResponse, ClientError> {
+        client.execute(self).await
     }
 
     pub fn V<T: Into<Step> + Clone>(mut self, args: T) -> Self {

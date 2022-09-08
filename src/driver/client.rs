@@ -1,6 +1,6 @@
 use futures::{stream::StreamExt, SinkExt};
 use serde::{de, Serialize};
-use serde_json::{self, from_slice, from_value, to_vec, Value};
+use serde_json::{self, from_slice, from_value, to_string_pretty, to_vec, Value};
 use thiserror::Error;
 use tokio::{
     spawn,
@@ -190,6 +190,12 @@ impl Client {
                                 .map(|p| res.result.data.map(|mut d| p.0.append(&mut d)));
                         }
                         _ => {
+                            #[cfg(test)]
+                            println!(
+                                "error response received:\n{}",
+                                to_string_pretty(&res).unwrap()
+                            );
+
                             if let Some((_, os_sender)) = pending.remove(&res.request_id) {
                                 match os_sender
                                     .send(Err(ClientError::ResponseError(res.status.code)))

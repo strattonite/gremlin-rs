@@ -2,7 +2,7 @@ use serde::*;
 use serde_json::{Map, Value};
 use uuid::Uuid;
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct GremlinResponse {
     pub request_id: Uuid,
@@ -10,13 +10,13 @@ pub struct GremlinResponse {
     pub result: ResponseResult,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Serialize)]
 pub struct ResponseResult {
     pub data: Option<Vec<Value>>,
     pub meta: Value,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Serialize)]
 pub struct ResponseStatus {
     pub message: String,
     pub code: usize,
