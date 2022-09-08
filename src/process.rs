@@ -225,11 +225,11 @@ impl From<&str> for StepValue {
     }
 }
 
-// impl From<Uuid> for StepValue {
-//     fn from(v: Uuid) -> Self {
-//         Self::String(v.to_string())
-//     }
-// }
+impl From<Uuid> for StepValue {
+    fn from(v: Uuid) -> Self {
+        Self::String(v.to_string())
+    }
+}
 
 // impl From<Process> for StepValue {
 //     fn from(v: Process) -> Self {
