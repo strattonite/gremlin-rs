@@ -304,6 +304,12 @@ impl From<Traversal> for Step {
     }
 }
 
+impl From<String> for Step {
+    fn from(s: String) -> Self {
+        Step(vec![s.into()])
+    }
+}
+
 macro_rules! test_macro {
     ($($T:ident),+) => {
         impl <$($T: Into<StepValue>),+> Into<Step> for ($($T,)+) {
