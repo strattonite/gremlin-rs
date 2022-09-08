@@ -1,6 +1,6 @@
 use futures::{stream::StreamExt, SinkExt};
 use serde::{de, Serialize};
-use serde_json::{self, from_slice, from_value, to_string_pretty, to_vec, Value};
+use serde_json::{self, from_slice, from_value, to_vec, Value};
 use thiserror::Error;
 use tokio::{
     spawn,
@@ -13,6 +13,9 @@ use tokio_tungstenite::{
     tungstenite::{self, Message},
 };
 use uuid::Uuid;
+
+#[cfg(test)]
+use serde_json::to_string_pretty;
 
 type OneshotItem = Result<Vec<Value>, ClientError>;
 type MpscItem = (Bytecode, oneshot::Sender<OneshotItem>);

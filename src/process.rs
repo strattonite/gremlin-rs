@@ -310,6 +310,12 @@ impl From<String> for Step {
     }
 }
 
+impl<T: Into<StepValue>> From<Vec<T>> for Step {
+    fn from(v: Vec<T>) -> Self {
+        Step(v.into_iter().map(|i| i.into()).collect())
+    }
+}
+
 macro_rules! test_macro {
     ($($T:ident),+) => {
         impl <$($T: Into<StepValue>),+> Into<Step> for ($($T,)+) {
