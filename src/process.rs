@@ -198,6 +198,12 @@ impl From<Bytecode> for Process {
     }
 }
 
+impl From<Traversal> for Process {
+    fn from(t: Traversal) -> Self {
+        Self::Bytecode(t.into())
+    }
+}
+
 #[derive(Serialize, Debug, Clone)]
 #[serde(untagged)]
 pub(crate) enum StepValue {
@@ -225,11 +231,11 @@ impl From<Uuid> for StepValue {
     }
 }
 
-impl From<Process> for StepValue {
-    fn from(v: Process) -> Self {
-        Self::Process(v)
-    }
-}
+// impl From<Process> for StepValue {
+//     fn from(v: Process) -> Self {
+//         Self::Process(v)
+//     }
+// }
 
 impl From<GValue> for StepValue {
     fn from(v: GValue) -> Self {
@@ -261,17 +267,23 @@ impl From<i64> for StepValue {
     }
 }
 
-impl From<Traversal> for StepValue {
-    fn from(v: Traversal) -> Self {
-        let b: Bytecode = v.into();
-        let p: Process = b.into();
-        p.into()
-    }
-}
+// impl From<Traversal> for StepValue {
+//     fn from(v: Traversal) -> Self {
+//         let b: Bytecode = v.into();
+//         let p: Process = b.into();
+//         p.into()
+//     }
+// }
 
-impl<T: Into<StepValue> + Clone> From<&T> for StepValue {
-    fn from(v: &T) -> Self {
-        Into::<StepValue>::into(v.clone())
+// impl<T: Into<StepValue> + Clone> From<&T> for StepValue {
+//     fn from(v: &T) -> Self {
+//         Into::<StepValue>::into(v.clone())
+//     }
+// }
+
+impl<T: Into<Process>> From<T> for StepValue {
+    fn from(v: T) -> Self {
+        StepValue::Process(v.into())
     }
 }
 
