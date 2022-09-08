@@ -3,21 +3,20 @@ use crate::driver::*;
 use super::*;
 
 #[derive(Serialize, Debug, Clone)]
-pub struct Bytecode {
+pub(crate) struct Bytecode {
     #[serde(rename = "step")]
     steps: Vec<Vec<StepValue>>,
 }
 
 impl Bytecode {
-    pub fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Bytecode { steps: Vec::new() }
     }
-    pub fn add_step(&mut self, s: Vec<StepValue>) {
+    pub(crate) fn add_step(&mut self, s: Vec<StepValue>) {
         self.steps.push(s)
     }
 }
 
-#[derive(Clone)]
 pub struct Traversal {
     bytecode: Bytecode,
 }
@@ -31,6 +30,12 @@ impl Into<Bytecode> for Traversal {
 impl Into<Bytecode> for &mut Traversal {
     fn into(self) -> Bytecode {
         self.to_owned().bytecode
+    }
+}
+
+impl Clone for Traversal {
+    fn clone(&self) -> Self {
+        Traversal::new()
     }
 }
 

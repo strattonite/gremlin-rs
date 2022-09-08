@@ -7,15 +7,18 @@ pub mod structure;
 
 #[cfg(test)]
 mod tests {
-    use crate::{process::traversal::Bytecode, structure::Vertex, *};
+    use crate::{
+        process::{Bytecode, Traversal, __},
+        structure::Vertex,
+        *,
+    };
     use serde_json::to_string_pretty;
     use std::env;
     use tokio::time::{timeout, Duration};
 
     #[test]
     fn test_traversal_serialization() {
-        let g = process::traversal::Traversal::new();
-        let mut __ = process::traversal::Traversal::new();
+        let g = Traversal::new();
         let bt: Bytecode = g
             .V(())
             .addE("user")
@@ -29,7 +32,7 @@ mod tests {
     async fn integration_test() {
         if let Ok(test_url) = env::var("TEST_URL") {
             let client = driver::Client::new(&test_url, 1000).await.unwrap();
-            let g = process::traversal::Traversal::new();
+            let g = process::Traversal::new();
 
             println!("testing query execution...");
             let result = timeout(

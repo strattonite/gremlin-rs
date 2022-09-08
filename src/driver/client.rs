@@ -22,10 +22,7 @@ use std::{
     time,
 };
 
-use crate::process::{
-    traversal::{Bytecode, Traversal},
-    GValue, Process,
-};
+use crate::process::{Bytecode, GValue, Process, Traversal};
 
 use super::parser::*;
 
@@ -301,7 +298,7 @@ impl Drop for Client {
 
 #[cfg(test)]
 mod tests {
-    use crate::process::traversal::{Bytecode, Traversal};
+    use crate::process::{Bytecode, Traversal};
     use serde_json::to_string_pretty;
 
     use super::GremlinRequest;

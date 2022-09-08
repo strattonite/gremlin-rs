@@ -1,8 +1,16 @@
 use serde::*;
-pub mod traversal;
+mod anonymous;
+mod traversal;
+use lazy_static::*;
 use std::time;
-use traversal::*;
 use uuid::Uuid;
+
+use anonymous::AnonymousTraversal;
+pub use traversal::*;
+
+lazy_static! {
+    pub static ref __: AnonymousTraversal = AnonymousTraversal::new();
+}
 
 #[derive(Serialize, Debug, Clone)]
 #[serde(tag = "@type", content = "@value")]
@@ -136,7 +144,7 @@ pub enum Order {
 
 #[derive(Serialize, Debug, Clone)]
 #[serde(tag = "@type", content = "@value")]
-pub enum Process {
+pub(crate) enum Process {
     #[serde(rename = "g:Cardinality")]
     Cardinality(Cardinality),
     #[serde(rename = "g:Operator")]
@@ -189,11 +197,10 @@ impl From<Bytecode> for Process {
 
 #[derive(Serialize, Debug, Clone)]
 #[serde(untagged)]
-pub enum StepValue {
+pub(crate) enum StepValue {
     String(String),
     Process(Process),
     Literal(GValue),
-    Null,
 }
 
 impl From<String> for StepValue {
@@ -267,11 +274,11 @@ impl<T: Into<StepValue> + Clone> From<&T> for StepValue {
 pub struct Step(Vec<StepValue>);
 
 impl Step {
-    pub fn operator(mut self, op: &str) -> Vec<StepValue> {
+    pub(crate) fn operator(mut self, op: &str) -> Vec<StepValue> {
         self.0.insert(0, op.into());
         self.0
     }
-    pub fn no_arg(op: &str) -> Vec<StepValue> {
+    pub(crate) fn no_arg(op: &str) -> Vec<StepValue> {
         vec![op.into()]
     }
 }
