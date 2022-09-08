@@ -4,12 +4,15 @@ mod traversal;
 use lazy_static::*;
 use std::time;
 use uuid::Uuid;
+mod source;
 
 use anonymous::AnonymousTraversal;
+use source::TraversalSource;
 pub use traversal::*;
 
 lazy_static! {
     pub static ref __: AnonymousTraversal = AnonymousTraversal::new();
+    pub static ref g: TraversalSource = TraversalSource::new();
 }
 
 #[derive(Serialize, Debug, Clone)]

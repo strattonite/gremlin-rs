@@ -298,14 +298,12 @@ impl Drop for Client {
 
 #[cfg(test)]
 mod tests {
-    use crate::process::{Bytecode, Traversal};
+    use crate::process::*;
     use serde_json::to_string_pretty;
 
     use super::GremlinRequest;
     #[test]
     fn test_request_serialization() {
-        let g = Traversal::new();
-        let mut __ = Traversal::new();
         let bt: Bytecode = g
             .V(())
             .addE("user")

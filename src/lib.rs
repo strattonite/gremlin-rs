@@ -1,4 +1,5 @@
 #![allow(non_snake_case)]
+#![allow(non_upper_case_globals)]
 
 pub mod driver;
 pub mod process;
@@ -6,18 +7,13 @@ pub mod structure;
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        process::{Bytecode, Traversal, __},
-        structure::Vertex,
-        *,
-    };
+    use crate::{process::*, structure::Vertex, *};
     use serde_json::to_string_pretty;
     use std::env;
     use tokio::time::{timeout, Duration};
 
     #[test]
     fn test_traversal_serialization() {
-        let g = Traversal::new();
         let bt: Bytecode = g
             .V(())
             .addE("user")
@@ -31,7 +27,6 @@ mod tests {
     async fn integration_test() {
         if let Ok(test_url) = env::var("TEST_URL") {
             let client = driver::Client::new(&test_url, 1000).await.unwrap();
-            let g = process::Traversal::new();
 
             println!("testing query execution...");
             let result = timeout(

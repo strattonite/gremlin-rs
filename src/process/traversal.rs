@@ -57,6 +57,12 @@ impl Traversal {
         self
     }
 
+    pub fn E<T: Into<Step> + Clone>(mut self, args: T) -> Self {
+        let step: Step = args.into();
+        self.bytecode.add_step(step.operator("E"));
+        self
+    }
+
     pub fn addE<T: Into<Step> + Clone>(mut self, args: T) -> Self {
         let step: Step = args.into();
         self.bytecode.add_step(step.operator("addE"));
