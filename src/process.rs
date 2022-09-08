@@ -204,6 +204,7 @@ pub(crate) enum StepValue {
     String(String),
     Process(Process),
     Literal(GValue),
+    Null(Option<()>),
 }
 
 impl From<String> for StepValue {
@@ -307,6 +308,12 @@ impl From<Traversal> for Step {
 impl From<String> for Step {
     fn from(s: String) -> Self {
         Step(vec![s.into()])
+    }
+}
+
+impl From<Option<String>> for Step {
+    fn from(_: Option<String>) -> Self {
+        Step(vec![StepValue::Null(None)])
     }
 }
 
