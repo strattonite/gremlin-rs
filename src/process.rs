@@ -335,6 +335,12 @@ impl<T: Into<StepValue>> From<Vec<T>> for Step {
     }
 }
 
+impl From<Uuid> for Step {
+    fn from(u: Uuid) -> Self {
+        Step(vec![u.to_string().into()])
+    }
+}
+
 macro_rules! test_macro {
     ($($T:ident),+) => {
         impl <$($T: Into<StepValue>),+> Into<Step> for ($($T,)+) {

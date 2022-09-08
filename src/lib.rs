@@ -16,8 +16,12 @@ mod tests {
     fn test_traversal_serialization() {
         let bt: Bytecode = g
             .V(())
-            .addE("user")
-            .to(__.V(()).hasLabel(("user", "workout")))
+            .coalesce((
+                __.addE("user")
+                    .to(__.V(()).hasLabel(("user", "workout")))
+                    .property((Cardinality::Single, "test", 69.420f64)),
+                __.constant(None),
+            ))
             .into();
         let json = to_string_pretty(&bt).unwrap();
         println!("{}", json);
