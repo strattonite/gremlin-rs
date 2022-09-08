@@ -1,11 +1,11 @@
 use futures::{stream::StreamExt, SinkExt};
 use serde::{de, Serialize};
 use serde_json::{self, from_slice, from_value, to_vec, Value};
-use std::collections::HashMap;
 use thiserror::Error;
 use tokio::{
     spawn,
     sync::{mpsc, oneshot},
+    time::interval,
 };
 use tokio_stream::wrappers::UnboundedReceiverStream;
 use tokio_tungstenite::{
@@ -17,6 +17,10 @@ use uuid::Uuid;
 type OneshotItem = Result<Vec<Value>, ClientError>;
 type MpscItem = (Bytecode, oneshot::Sender<OneshotItem>);
 type PendingItem = (Vec<Value>, oneshot::Sender<OneshotItem>);
+use std::{
+    collections::{HashMap, VecDeque},
+    time,
+};
 
 use crate::process::{
     traversal::{Bytecode, Traversal},
@@ -117,12 +121,13 @@ enum EventType {
     Ws(GremlinResponse),
     Rx(MpscItem),
     Kill,
+    Timeouts,
 }
 
 use EventType::*;
 
 impl Client {
-    pub async fn new(url: &str) -> Result<Self, ClientError> {
+    pub async fn new(url: &str, timeout_ms: u128) -> Result<Self, ClientError> {
         #[cfg(test)]
         println!("client connecting to websocket url: {}", url);
 
@@ -139,7 +144,9 @@ impl Client {
             while let Some(res) = stream.next().await {
                 if let Ok(Message::Binary(bin)) = res {
                     if let Ok(response) = from_slice::<GremlinResponse>(&bin[..]) {
-                        tx_clone.send(Ws(response)).unwrap()
+                        if let Err(_) = tx_clone.send(Ws(response)) {
+                            break;
+                        }
                     } else {
                         #[cfg(test)]
                         println!(
@@ -155,15 +162,29 @@ impl Client {
             }
         });
 
+        let tx_clone = tx.clone();
+        spawn(async move {
+            let mut interval = interval(time::Duration::from_millis(100));
+            loop {
+                interval.tick().await;
+                if let Err(_) = tx_clone.send(Timeouts) {
+                    break;
+                }
+            }
+        });
+
         spawn(async move {
             let mut pending: HashMap<Uuid, PendingItem> = HashMap::new();
+            let mut timeouts: VecDeque<(u128, Uuid)> = VecDeque::new();
             while let Some(val) = rx_stream.next().await {
                 match val {
                     Ws(res) => match res.status.code {
                         200 | 204 => {
                             if let Some((mut data, os_sender)) = pending.remove(&res.request_id) {
                                 res.result.data.map(|mut d| data.append(&mut d));
-                                os_sender.send(Ok(data)).unwrap();
+                                match os_sender.send(Ok(data)) {
+                                    _ => {}
+                                }
                             }
                         }
                         206 => {
@@ -173,9 +194,11 @@ impl Client {
                         }
                         _ => {
                             if let Some((_, os_sender)) = pending.remove(&res.request_id) {
-                                os_sender
+                                match os_sender
                                     .send(Err(ClientError::ResponseError(res.status.code)))
-                                    .unwrap();
+                                {
+                                    _ => {}
+                                }
                             }
                         }
                     },
@@ -184,6 +207,14 @@ impl Client {
                         match sink.send(request.into()).await {
                             Ok(_) => {
                                 pending.insert(request_id.clone(), (Vec::new(), os_sender));
+                                timeouts.push_back((
+                                    time::SystemTime::now()
+                                        .duration_since(time::UNIX_EPOCH)
+                                        .unwrap()
+                                        .as_millis()
+                                        + timeout_ms,
+                                    request_id,
+                                ))
                             }
                             Err(e) => os_sender.send(Err(ClientError::NetworkError(e))).unwrap(),
                         };
@@ -199,6 +230,27 @@ impl Client {
                             };
                         }
                         break;
+                    }
+                    Timeouts => {
+                        let now = time::SystemTime::now()
+                            .duration_since(time::UNIX_EPOCH)
+                            .unwrap()
+                            .as_millis();
+
+                        loop {
+                            if let Some((t, request_id)) = timeouts.pop_front() {
+                                if t < now {
+                                    if let Some((_, os_sender)) = pending.remove(&request_id) {
+                                        match os_sender.send(Err(ClientError::RequestTimeout)) {
+                                            _ => {}
+                                        }
+                                    }
+                                } else {
+                                    timeouts.push_front((t, request_id));
+                                    break;
+                                }
+                            }
+                        }
                     }
                 }
             }

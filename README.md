@@ -5,7 +5,6 @@
 ## Usage
 - allows for strongly typed parsing of gremlin responses (by serde_json) as opposed to enum format (gremlin_client), for weakly typed data response can be kept as serde_json::Value enum
 - traversal steps with optional args can be passed &[()] to avoid type specification when not using any args
-- currently no query timeout implemented, use tokio::time::timeout if desired
 
 ## Caveats
 - if using a step with single u32/u64/f32/f64... argument, use a tuple e.g. g.V().sample((1u32,))

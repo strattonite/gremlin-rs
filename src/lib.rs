@@ -28,7 +28,7 @@ mod tests {
     #[tokio::test]
     async fn integration_test() {
         if let Ok(test_url) = env::var("TEST_URL") {
-            let client = driver::Client::new(&test_url).await.unwrap();
+            let client = driver::Client::new(&test_url, 1000).await.unwrap();
             let g = process::traversal::Traversal::new();
 
             println!("testing query execution...");
