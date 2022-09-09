@@ -1,6 +1,6 @@
 use futures::{stream::StreamExt, SinkExt};
 use serde::{de, Serialize};
-use serde_json::{self, from_slice, from_value, to_vec, Value};
+use serde_json::{self, from_slice, from_value, to_string, to_vec, Value};
 use thiserror::Error;
 use tokio::{
     spawn,
@@ -36,7 +36,7 @@ pub enum ClientError {
     #[error("error sending gremlin request: {0}")]
     NetworkError(tungstenite::Error),
     #[error("server response error ({0})")]
-    ResponseError(usize),
+    ResponseError(usize, String),
     #[error("gremlin request exceeded timeout")]
     RequestTimeout,
     #[error("error sending bytecode to processor (main client may have been dropped)")]
@@ -200,9 +200,10 @@ impl Client {
                             );
 
                             if let Some((_, os_sender)) = pending.remove(&res.request_id) {
-                                match os_sender
-                                    .send(Err(ClientError::ResponseError(res.status.code)))
-                                {
+                                match os_sender.send(Err(ClientError::ResponseError(
+                                    res.status.code,
+                                    to_string(&res).unwrap(),
+                                ))) {
                                     _ => {}
                                 }
                             }
