@@ -118,11 +118,11 @@ pub enum P {
     Lte(GValue),
     Gt(GValue),
     Gte(GValue),
-    Inside(GValue),
-    Outside(GValue),
-    Between(GValue),
-    Within(GValue),
-    Without(GValue),
+    Inside(Vec<GValue>),
+    Outside(Vec<GValue>),
+    Between(Vec<GValue>),
+    Within(Vec<GValue>),
+    Without(Vec<GValue>),
 }
 
 #[derive(Serialize, Debug, Clone)]
