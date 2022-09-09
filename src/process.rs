@@ -111,7 +111,7 @@ pub enum Operator {
 #[derive(Serialize, Debug, Clone)]
 #[serde(tag = "predicate", content = "value")]
 #[serde(rename_all = "lowercase")]
-pub enum Predicate {
+pub enum P {
     Eq(GValue),
     Neq(GValue),
     Lt(GValue),
@@ -128,7 +128,7 @@ pub enum Predicate {
 #[derive(Serialize, Debug, Clone)]
 #[serde(tag = "predicate", content = "value")]
 #[serde(rename_all = "camelCase")]
-pub enum TextPredicate {
+pub enum TextP {
     StartingWith(String),
     EndingWith(String),
     Containing(String),
@@ -153,9 +153,9 @@ pub(crate) enum Process {
     #[serde(rename = "g:Operator")]
     Operator(Operator),
     #[serde(rename = "g:P")]
-    Predicate(Predicate),
+    Predicate(P),
     #[serde(rename = "g:TextP")]
-    TextPredicate(TextPredicate),
+    TextPredicate(TextP),
     #[serde(rename = "g:Order")]
     Order(Order),
     #[serde(rename = "g:Bytecode")]
@@ -174,14 +174,14 @@ impl From<Operator> for Process {
     }
 }
 
-impl From<Predicate> for Process {
-    fn from(v: Predicate) -> Self {
+impl From<P> for Process {
+    fn from(v: P) -> Self {
         Self::Predicate(v)
     }
 }
 
-impl From<TextPredicate> for Process {
-    fn from(v: TextPredicate) -> Self {
+impl From<TextP> for Process {
+    fn from(v: TextP) -> Self {
         Self::TextPredicate(v)
     }
 }
