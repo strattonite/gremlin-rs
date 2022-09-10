@@ -15,6 +15,24 @@ impl Bytecode {
     pub(crate) fn add_step(&mut self, s: Vec<StepValue>) {
         self.steps.push(s)
     }
+    pub(crate) fn is_mutating(&self) -> bool {
+        for st in self.steps.iter() {
+            match st.get(0) {
+                Some(StepValue::String(s)) => match s.as_str() {
+                    "addE" | "addV" | "property" | "drop" | "mergeE" | "mergeV" => return true,
+                    _ => (),
+                },
+
+                Some(StepValue::Process(Process::Bytecode(b))) => {
+                    if b.is_mutating() {
+                        return true;
+                    }
+                }
+                _ => (),
+            };
+        }
+        false
+    }
 }
 
 pub struct Traversal {
@@ -45,6 +63,10 @@ impl Traversal {
         Traversal {
             bytecode: Bytecode::new(),
         }
+    }
+
+    pub fn is_mutating(&self) -> bool {
+        self.bytecode.is_mutating()
     }
 
     pub async fn to_list(self, client: &Client) -> Result<ClientResponse, ClientError> {

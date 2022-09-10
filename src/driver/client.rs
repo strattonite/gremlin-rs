@@ -10,7 +10,7 @@ use tokio::{
 use tokio_stream::wrappers::UnboundedReceiverStream;
 use tokio_tungstenite::{
     connect_async_tls_with_config,
-    tungstenite::{self, Message},
+    tungstenite::{self, client::IntoClientRequest, Message},
 };
 use uuid::Uuid;
 
@@ -43,6 +43,8 @@ pub enum ClientError {
     ExecutionError,
     #[error("main client closed")]
     ClientClosed,
+    #[error("no available clients")]
+    NoClients,
 }
 
 #[derive(Debug)]
@@ -61,7 +63,7 @@ impl From<Vec<Value>> for ClientResponse {
 }
 
 pub struct Client {
-    tx: mpsc::UnboundedSender<EventType>,
+    pub(crate) tx: mpsc::UnboundedSender<EventType>,
     main: bool,
 }
 
@@ -117,7 +119,7 @@ impl Into<Message> for GremlinRequest {
 }
 
 #[derive(Debug)]
-enum EventType {
+pub(crate) enum EventType {
     Ws(GremlinResponse),
     Rx(MpscItem),
     Kill,
@@ -127,10 +129,10 @@ enum EventType {
 use EventType::*;
 
 impl Client {
-    pub async fn new(url: &str, timeout_ms: u128) -> Result<Self, ClientError> {
-        #[cfg(test)]
-        println!("client connecting to websocket url: {}", url);
-
+    pub async fn new<T: IntoClientRequest + Unpin>(
+        url: T,
+        timeout_ms: u128,
+    ) -> Result<Self, ClientError> {
         let (wss, _) = connect_async_tls_with_config(url, None, None).await?;
 
         let (mut sink, mut stream) = wss.split();
