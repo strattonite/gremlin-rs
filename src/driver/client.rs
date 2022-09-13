@@ -19,6 +19,9 @@ use std::{
     time,
 };
 
+#[cfg(test)]
+use serde_json::to_string_pretty;
+
 use crate::process::{bytecode::Bytecode, Traversal};
 
 use super::serialize::*;
@@ -124,7 +127,26 @@ impl Client {
                 match val {
                     Ws(res) => {
                         let header = parse_response_header(&res);
+
+                        #[cfg(test)]
+                        if let Err(e) = &header {
+                            println!(
+                                "error parsing header: {}\n{}\n",
+                                e,
+                                from_utf8(&res).unwrap_or("invalid_utf8")
+                            );
+                        }
+
                         if let Ok(h) = header {
+                            #[cfg(test)]
+                            if let None = &h.request_id {
+                                println!(
+                                    "no request id received:\n{}\n{}",
+                                    to_string_pretty(&h).unwrap(),
+                                    from_utf8(&res).unwrap_or("invalid_utf8")
+                                );
+                            }
+
                             if let Some(request_id) = h.request_id {
                                 match h.status.code {
                                     200 | 204 => {
@@ -235,6 +257,10 @@ impl Client {
         let bytecode: Bytecode = query.into();
 
         let (os_tx, os_rx) = oneshot::channel();
+
+        #[cfg(test)]
+        println!("sending bytecode for execution");
+
         if let Err(_) = self.tx.send(Rx((bytecode, os_tx))) {
             return Err(ClientError::ExecutionError);
         }

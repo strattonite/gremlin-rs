@@ -9,6 +9,7 @@ pub mod structure;
 mod tests {
     use super::*;
     use process::*;
+    use serde_json::to_string_pretty;
     use std::{env, time::Duration};
     use structure::*;
     use tokio::time::timeout;
@@ -30,8 +31,8 @@ mod tests {
             println!("{:?}", &result);
 
             println!("testing response data parsing");
-            let v: Vec<Vertex> = result.parse().unwrap();
-            println!("{:?}", &v);
+            let v: Vec<gson::GsonV2> = result.parse().unwrap();
+            println!("{}", to_string_pretty(&v).unwrap());
         } else {
             println!("integration test not run, missing TEST_URL env var")
         }
