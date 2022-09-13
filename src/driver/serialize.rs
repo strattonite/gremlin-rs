@@ -54,7 +54,7 @@ pub fn parse_response_header(data: &Vec<u8>) -> GResult<ResponseHeader> {
 pub(crate) enum ReqEnum {
     #[serde(rename = "g:UUID")]
     Uuid(Uuid),
-    #[serde(rename = "g:UUID")]
+    #[serde(rename = "g:Bytecode")]
     Bytecode(bytecode::Bytecode),
 }
 
