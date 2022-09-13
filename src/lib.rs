@@ -17,22 +17,21 @@ mod tests {
     #[tokio::test]
     async fn client_integration() {
         if let Ok(test_url) = env::var("TEST_URL") {
-            println!("would've run");
             let client = timeout(Duration::from_secs(5), driver::Client::new(&test_url, 1000))
                 .await
                 .unwrap()
                 .unwrap();
             println!("created remote client");
-            // println!("testing query execution...");
-            // let result = timeout(
-            //     Duration::from_secs(5),
-            //     g.V(()).sample((1,)).to_list(&client),
-            // )
-            // .await
-            // .unwrap()
-            // .unwrap();
+            println!("testing query execution...");
+            let result = timeout(
+                Duration::from_secs(5),
+                g.V(()).sample((1,)).to_list(&client),
+            )
+            .await
+            .unwrap()
+            .unwrap();
 
-            // println!("{:?}", &result);
+            println!("{:?}", &result);
 
             // println!("testing response data parsing");
             // let v: Vec<gson::GsonV2> = result.parse().unwrap();
