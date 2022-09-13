@@ -23,6 +23,7 @@ mod tests {
                 .unwrap();
             println!("created remote client");
             println!("testing query execution...");
+
             let result = timeout(
                 Duration::from_secs(5),
                 g.V(()).sample((1,)).to_list(&client),
@@ -33,9 +34,9 @@ mod tests {
 
             println!("{:?}", &result);
 
-            // println!("testing response data parsing");
-            // let v: Vec<gson::GsonV2> = result.parse().unwrap();
-            // println!("{}", to_string_pretty(&v).unwrap());
+            println!("testing response data parsing");
+            let v: Vec<gson::GsonV2> = result.parse().unwrap();
+            println!("{}", to_string_pretty(&v).unwrap());
         } else {
             println!("integration test not run, missing TEST_URL env var")
         }

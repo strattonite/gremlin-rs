@@ -135,6 +135,7 @@ impl Client {
                                 e,
                                 from_utf8(&res).unwrap_or("invalid_utf8")
                             );
+                            panic!()
                         }
 
                         if let Ok(h) = header {
@@ -145,6 +146,7 @@ impl Client {
                                     to_string_pretty(&h).unwrap(),
                                     from_utf8(&res).unwrap_or("invalid_utf8")
                                 );
+                                panic!()
                             }
 
                             if let Some(request_id) = h.request_id {
