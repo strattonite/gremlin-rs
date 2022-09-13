@@ -136,7 +136,7 @@ impl Client {
                                 from_utf8(&res).unwrap_or("invalid_utf8")
                             );
                             for (_, (_, sender)) in pending.drain() {
-                                sender.send(ClientError::NoClients)
+                                sender.send(Err(ClientError::NoClients)).unwrap();
                             }
                         }
 
@@ -149,7 +149,7 @@ impl Client {
                                     from_utf8(&res).unwrap_or("invalid_utf8")
                                 );
                                 for (_, (_, sender)) in pending.drain() {
-                                    sender.send(ClientError::NoClients)
+                                    sender.send(Err(ClientError::NoClients)).unwrap();
                                 }
                             }
 
