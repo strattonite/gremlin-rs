@@ -7,28 +7,14 @@ pub mod structure;
 
 #[cfg(test)]
 mod tests {
-    use crate::{process::*, structure::Vertex, *};
-    use serde_json::to_string_pretty;
-    use std::env;
-    use tokio::time::{timeout, Duration};
-
-    #[test]
-    fn test_traversal_serialization() {
-        let bt: Bytecode = g
-            .V(())
-            .coalesce((
-                __.addE("user")
-                    .to(__.V(()).hasLabel(("user", "workout")))
-                    .property((Cardinality::Single, "test", 69.420f64)),
-                __.constant(None),
-            ))
-            .into();
-        let json = to_string_pretty(&bt).unwrap();
-        println!("{}", json);
-    }
+    use super::*;
+    use process::*;
+    use std::{env, time::Duration};
+    use structure::*;
+    use tokio::time::timeout;
 
     #[tokio::test]
-    async fn integration_test() {
+    async fn client_integration() {
         if let Ok(test_url) = env::var("TEST_URL") {
             let client = driver::Client::new(&test_url, 1000).await.unwrap();
 

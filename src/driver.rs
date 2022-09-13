@@ -1,6 +1,6 @@
 mod client;
-mod parser;
 mod pool;
+mod serialize;
 
 pub use client::*;
 pub use pool::*;

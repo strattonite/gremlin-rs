@@ -1,8 +1,10 @@
+pub mod de;
+pub mod gson;
+
 use serde::*;
-use serde_json::Value;
 use uuid::Uuid;
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Edge {
     pub id: Uuid,
@@ -11,28 +13,23 @@ pub struct Edge {
     pub out_v_label: String,
     pub in_v: Uuid,
     pub out_v: Uuid,
-    pub properties: Value,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Serialize, Clone)]
 pub struct Vertex {
     pub id: Uuid,
     pub label: String,
-    #[serde(default)]
-    pub properties: Value,
 }
 
-#[derive(Deserialize, Debug)]
-pub struct VertexProperty<T> {
+#[derive(Deserialize, Debug, Serialize, Clone)]
+pub struct VertexProperty<T: Clone> {
     pub id: i64,
     pub label: String,
     pub value: T,
-    pub vertex: Vertex,
 }
 
-#[derive(Deserialize, Debug)]
-pub struct Property<T, E> {
+#[derive(Deserialize, Debug, Serialize, Clone)]
+pub struct Property<T: Clone> {
     pub key: String,
     pub value: T,
-    pub element: E,
 }

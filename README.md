@@ -16,7 +16,9 @@ instead client passed to traversal at execution stage, allows many traversals to
 
 - g:Path data structure not yet implemented
 
-- driver::Client recieves queries to execute and handles reponses on same (tokio::spawn) thread so for very large throughput create multiple clients for multi-core parallelism (may implement client pool in future...)
+- driver::Client recieves queries to execute and handles reponses on same (tokio::spawn) thread so for very large throughput use ClientPool
+
+- due to AWS Neptune's DNS based request routing, when using ClientPool it is advised to create one read client for each read-only db server in the cluster to ensure requests are evenly distributed
 
 - parsing method means gremlin types are lost on deserialization and converted to serde_json::Value instead of GValue, could change in future if I implement a parser for GValue's but not currently needed
 
@@ -28,8 +30,6 @@ instead client passed to traversal at execution stage, allows many traversals to
 4. implement Traversal::with_remote(remote &RemoteClient)?
 5. implement LocalClient?
 6. implement authentication for server communication
-7. create ClientPool to use multiple cores
-8. implement cluster logic for Client/ClientPool e.g. all read queries to read-only endpoints
 9. static query macro? (e.g. lazy_static for query serialization but uses format! to sub args in before query submission, may result in better performance)
 10. macro/function for parsing string query into bytecode for submission
 

@@ -1,40 +1,6 @@
-use crate::driver::*;
+use crate::{driver::*, process::bytecode::*};
 
-use super::*;
-
-#[derive(Serialize, Debug, Clone)]
-pub(crate) struct Bytecode {
-    #[serde(rename = "step")]
-    steps: Vec<Vec<StepValue>>,
-}
-
-impl Bytecode {
-    pub(crate) fn new() -> Self {
-        Bytecode { steps: Vec::new() }
-    }
-    pub(crate) fn add_step(&mut self, s: Vec<StepValue>) {
-        self.steps.push(s)
-    }
-    pub(crate) fn is_mutating(&self) -> bool {
-        for st in self.steps.iter() {
-            match st.get(0) {
-                Some(StepValue::String(s)) => match s.as_str() {
-                    "addE" | "addV" | "property" | "drop" | "mergeE" | "mergeV" => return true,
-                    _ => (),
-                },
-
-                Some(StepValue::Process(Process::Bytecode(b))) => {
-                    if b.is_mutating() {
-                        return true;
-                    }
-                }
-                _ => (),
-            };
-        }
-        false
-    }
-}
-
+#[derive(Debug)]
 pub struct Traversal {
     bytecode: Bytecode,
 }
@@ -73,685 +39,497 @@ impl Traversal {
         client.execute(self).await
     }
 
-    pub fn V<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("V"));
+    pub fn V<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("V", args);
         self
     }
 
-    pub fn E<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("E"));
+    pub fn E<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("E", args);
         self
     }
 
-    pub fn addE<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("addE"));
-
+    pub fn addE<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("addE", args);
         self
     }
 
-    pub fn addV<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("addV"));
-
+    pub fn addV<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("addV", args);
         self
     }
 
-    pub fn aggregate<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("aggregate"));
-
+    pub fn aggregate<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("aggregate", args);
         self
     }
 
-    pub fn and<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("and"));
-
+    pub fn and<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("and", args);
         self
     }
 
-    pub fn as_<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("as"));
-
+    pub fn as_<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("as", args);
         self
     }
 
-    pub fn barrier<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("barrier"));
-
+    pub fn barrier<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("barrier", args);
         self
     }
 
-    pub fn both<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("both"));
-
+    pub fn both<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("both", args);
         self
     }
 
-    pub fn bothE<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("bothE"));
-
+    pub fn bothE<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("bothE", args);
         self
     }
 
-    pub fn bothV<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("bothV"));
-
+    pub fn bothV<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("bothV", args);
         self
     }
 
     pub fn branch(mut self) -> Self {
-        self.bytecode.add_step(Step::no_arg("branch"));
-
+        self.bytecode.no_arg_step("branch");
         self
     }
 
-    pub fn by<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("by"));
-
+    pub fn by<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("by", args);
         self
     }
 
-    pub fn call<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("call"));
-
+    pub fn call<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("call", args);
         self
     }
 
-    pub fn cap<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("cap"));
-
+    pub fn cap<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("cap", args);
         self
     }
 
-    pub fn choose<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("choose"));
-
+    pub fn choose<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("choose", args);
         self
     }
 
-    pub fn coalesce<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("coalesce"));
-
+    pub fn coalesce<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("coalesce", args);
         self
     }
 
-    pub fn coin<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("coin"));
-
+    pub fn coin<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("coin", args);
         self
     }
 
-    pub fn connectedComponent<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("connectedComponent"));
-
+    pub fn connectedComponent<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("connectedComponent", args);
         self
     }
 
-    pub fn constant<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("constant"));
-
+    pub fn constant<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("constant", args);
         self
     }
 
     pub fn count(mut self) -> Self {
-        self.bytecode.add_step(Step::no_arg("count"));
-
+        self.bytecode.no_arg_step("count");
         self
     }
 
-    pub fn cyclicPath<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("cyclicPath"));
-
+    pub fn cyclicPath<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("cyclicPath", args);
         self
     }
 
-    pub fn dedup<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("dedup"));
-
+    pub fn dedup<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("dedup", args);
         self
     }
 
     pub fn drop(mut self) -> Self {
-        self.bytecode.add_step(Step::no_arg("drop"));
-
+        self.bytecode.no_arg_step("drop");
         self
     }
 
     pub fn element(mut self) -> Self {
-        self.bytecode.add_step(Step::no_arg("element"));
-
+        self.bytecode.no_arg_step("element");
         self
     }
 
-    pub fn elementMap<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("elementMap"));
-
+    pub fn elementMap<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("elementMap", args);
         self
     }
 
-    pub fn emit<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("emit"));
-
+    pub fn emit<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("emit", args);
         self
     }
 
     pub fn fail(mut self) -> Self {
-        self.bytecode.add_step(Step::no_arg("fail"));
-
+        self.bytecode.no_arg_step("fail");
         self
     }
 
-    pub fn filter<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("filter"));
-
+    pub fn filter<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("filter", args);
         self
     }
 
     pub fn flatMap(mut self) -> Self {
-        self.bytecode.add_step(Step::no_arg("flatMap"));
-
+        self.bytecode.no_arg_step("flatMap");
         self
     }
 
     pub fn fold(mut self) -> Self {
-        self.bytecode.add_step(Step::no_arg("fold"));
-
+        self.bytecode.no_arg_step("fold");
         self
     }
 
-    pub fn from<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("from"));
-
+    pub fn from<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("from", args);
         self
     }
 
-    pub fn group<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("group"));
-
+    pub fn group<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("group", args);
         self
     }
 
-    pub fn groupCount<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("groupCount"));
-
+    pub fn groupCount<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("groupCount", args);
         self
     }
 
-    pub fn has<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("has"));
-
+    pub fn has<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("has", args);
         self
     }
 
-    pub fn hasId<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("hasId"));
-
+    pub fn hasId<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("hasId", args);
         self
     }
 
-    pub fn hasKey<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("hasKey"));
-
+    pub fn hasKey<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("hasKey", args);
         self
     }
 
-    pub fn hasLabel<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("hasLabel"));
-
+    pub fn hasLabel<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("hasLabel", args);
         self
     }
 
-    pub fn hasNot<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("hasNot"));
-
+    pub fn hasNot<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("hasNot", args);
         self
     }
 
-    pub fn hasValue<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("hasValue"));
-
+    pub fn hasValue<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("hasValue", args);
         self
     }
 
     pub fn id(mut self) -> Self {
-        self.bytecode.add_step(Step::no_arg("id"));
-
+        self.bytecode.no_arg_step("id");
         self
     }
 
     pub fn identity(mut self) -> Self {
-        self.bytecode.add_step(Step::no_arg("identity"));
-
+        self.bytecode.no_arg_step("identity");
         self
     }
 
-    pub fn in_<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("in"));
-
+    pub fn in_<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("in", args);
         self
     }
 
-    pub fn inE<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("inE"));
-
+    pub fn inE<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("inE", args);
         self
     }
 
-    pub fn inV<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("inV"));
-
+    pub fn inV<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("inV", args);
         self
     }
 
     pub fn index(mut self) -> Self {
-        self.bytecode.add_step(Step::no_arg("index"));
-
+        self.bytecode.no_arg_step("index");
         self
     }
 
-    pub fn inject<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("inject"));
-
+    pub fn inject<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("inject", args);
         self
     }
 
-    pub fn is<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("is"));
-
+    pub fn is<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("is", args);
         self
     }
 
     pub fn key(mut self) -> Self {
-        self.bytecode.add_step(Step::no_arg("key"));
-
+        self.bytecode.no_arg_step("key");
         self
     }
 
     pub fn label(mut self) -> Self {
-        self.bytecode.add_step(Step::no_arg("label"));
-
+        self.bytecode.no_arg_step("label");
         self
     }
 
-    pub fn limit<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("limit"));
-
+    pub fn limit<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("limit", args);
         self
     }
 
-    pub fn local<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("local"));
-
+    pub fn local<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("local", args);
         self
     }
 
     pub fn loops(mut self) -> Self {
-        self.bytecode.add_step(Step::no_arg("loops"));
-
+        self.bytecode.no_arg_step("loops");
         self
     }
 
-    pub fn map<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("map"));
-
+    pub fn map<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("map", args);
         self
     }
 
-    pub fn match_<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("match"));
-
+    pub fn match_<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("match", args);
         self
     }
 
-    pub fn math<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("math"));
-
+    pub fn math<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("math", args);
         self
     }
 
     pub fn max(mut self) -> Self {
-        self.bytecode.add_step(Step::no_arg("max"));
-
+        self.bytecode.no_arg_step("max");
         self
     }
     pub fn mean(mut self) -> Self {
-        self.bytecode.add_step(Step::no_arg("mean"));
-
+        self.bytecode.no_arg_step("mean");
         self
     }
-    pub fn mergeE<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("mergeE"));
-
+    pub fn mergeE<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("mergeE", args);
         self
     }
-    pub fn mergeV<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("mergeV"));
-
+    pub fn mergeV<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("mergeV", args);
         self
     }
     pub fn min(mut self) -> Self {
-        self.bytecode.add_step(Step::no_arg("min"));
-
+        self.bytecode.no_arg_step("min");
         self
     }
     pub fn none(mut self) -> Self {
-        self.bytecode.add_step(Step::no_arg("none"));
-
+        self.bytecode.no_arg_step("none");
         self
     }
-    pub fn not<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("not"));
-
+    pub fn not<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("not", args);
         self
     }
 
-    pub fn option<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("option"));
-
+    pub fn option<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("option", args);
         self
     }
-    pub fn or<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("or"));
-
+    pub fn or<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("or", args);
         self
     }
     pub fn order(mut self) -> Self {
-        self.bytecode.add_step(Step::no_arg("order"));
-
+        self.bytecode.no_arg_step("order");
         self
     }
 
-    pub fn otherV<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("otherV"));
-
+    pub fn otherV<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("otherV", args);
         self
     }
-    pub fn out<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("out"));
-
+    pub fn out<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("out", args);
         self
     }
-    pub fn outE<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("outE"));
-
+    pub fn outE<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("outE", args);
         self
     }
 
-    pub fn outV<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("outV"));
-
+    pub fn outV<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("outV", args);
         self
     }
     pub fn pageRank(mut self) -> Self {
-        self.bytecode.add_step(Step::no_arg("pageRank"));
-
+        self.bytecode.no_arg_step("pageRank");
         self
     }
     pub fn path(mut self) -> Self {
-        self.bytecode.add_step(Step::no_arg("path"));
-
+        self.bytecode.no_arg_step("path");
         self
     }
     pub fn peerPressure(mut self) -> Self {
-        self.bytecode.add_step(Step::no_arg("peerPressure"));
-
+        self.bytecode.no_arg_step("peerPressure");
         self
     }
     pub fn profile(mut self) -> Self {
-        self.bytecode.add_step(Step::no_arg("profile"));
-
+        self.bytecode.no_arg_step("profile");
         self
     }
-    pub fn program<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("program"));
-
+    pub fn program<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("program", args);
         self
     }
-    pub fn project<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("project"));
-
+    pub fn project<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("project", args);
         self
     }
-    pub fn properties<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("properties"));
-
+    pub fn properties<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("properties", args);
         self
     }
-    pub fn property<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("property"));
-
+    pub fn property<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("property", args);
         self
     }
-    pub fn propertyMap<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("propertyMap"));
-
+    pub fn propertyMap<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("propertyMap", args);
         self
     }
-    pub fn range<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("range"));
-
+    pub fn range<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("range", args);
         self
     }
-    pub fn read<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("read"));
-
+    pub fn read<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("read", args);
         self
     }
-    pub fn repeat<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("repeat"));
-
+    pub fn repeat<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("repeat", args);
         self
     }
 
-    pub fn sack<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("sack"));
-
+    pub fn sack<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("sack", args);
         self
     }
-    pub fn sample<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("sample"));
-
+    pub fn sample<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("sample", args);
         self
     }
-    pub fn select<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("select"));
-
+    pub fn select<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("select", args);
         self
     }
-    pub fn shortestPath<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("shortestPath"));
-
+    pub fn shortestPath<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("shortestPath", args);
         self
     }
-    pub fn sideEffect<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("sideEffect"));
-
+    pub fn sideEffect<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("sideEffect", args);
         self
     }
-    pub fn simplePath<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("simplePath"));
-
+    pub fn simplePath<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("simplePath", args);
         self
     }
-    pub fn skip<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("skip"));
-
+    pub fn skip<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("skip", args);
         self
     }
-    pub fn store<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("store"));
-
+    pub fn store<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("store", args);
         self
     }
-    pub fn subgraph<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("subgraph"));
-
+    pub fn subgraph<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("subgraph", args);
         self
     }
     pub fn sum(mut self) -> Self {
-        self.bytecode.add_step(Step::no_arg("sum"));
-
+        self.bytecode.no_arg_step("sum");
         self
     }
-    pub fn tail<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("tail"));
-
+    pub fn tail<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("tail", args);
         self
     }
-    pub fn timeLimit<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("timeLimit"));
-
+    pub fn timeLimit<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("timeLimit", args);
         self
     }
-    pub fn times<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("times"));
-
+    pub fn times<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("times", args);
         self
     }
-    pub fn to<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("to"));
-
+    pub fn to<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("to", args);
         self
     }
-    pub fn toE<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("toE"));
-
+    pub fn toE<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("toE", args);
         self
     }
-    pub fn toV<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("toV"));
-
+    pub fn toV<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("toV", args);
         self
     }
-    pub fn tree<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("tree"));
-
+    pub fn tree<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("tree", args);
         self
     }
     pub fn unfold(mut self) -> Self {
-        self.bytecode.add_step(Step::no_arg("unfold"));
-
+        self.bytecode.no_arg_step("unfold");
         self
     }
-    pub fn union<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("union"));
-
+    pub fn union<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("union", args);
         self
     }
-    pub fn until<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("until"));
-
+    pub fn until<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("until", args);
         self
     }
     pub fn value(mut self) -> Self {
-        self.bytecode.add_step(Step::no_arg("value"));
-
+        self.bytecode.no_arg_step("value");
         self
     }
-    pub fn valueMap<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("valueMap"));
-
+    pub fn valueMap<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("valueMap", args);
         self
     }
 
-    pub fn values<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("values"));
-
+    pub fn values<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("values", args);
         self
     }
-    pub fn where_<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("where"));
-
+    pub fn where_<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("where", args);
         self
     }
-    pub fn with<T: Into<Step> + Clone>(mut self, args: T) -> Self {
-        let step: Step = args.into();
-        self.bytecode.add_step(step.operator("with"));
-
+    pub fn with<T: Into<BytecodeStep> + Clone>(mut self, args: T) -> Self {
+        self.bytecode.add_step("with", args);
         self
     }
     pub fn write(mut self) -> Self {
-        self.bytecode.add_step(Step::no_arg("write"));
-
+        self.bytecode.no_arg_step("write");
         self
     }
 }

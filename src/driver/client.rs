@@ -1,6 +1,5 @@
 use futures::{stream::StreamExt, SinkExt};
-use serde::{de, Serialize};
-use serde_json::{self, from_slice, from_value, to_string, to_vec, Value};
+use serde_json::to_vec;
 use thiserror::Error;
 use tokio::{
     spawn,
@@ -14,20 +13,19 @@ use tokio_tungstenite::{
 };
 use uuid::Uuid;
 
-#[cfg(test)]
-use serde_json::to_string_pretty;
-
-type OneshotItem = Result<Vec<Value>, ClientError>;
-type MpscItem = (Bytecode, oneshot::Sender<OneshotItem>);
-type PendingItem = (Vec<Value>, oneshot::Sender<OneshotItem>);
 use std::{
     collections::{HashMap, VecDeque},
+    str::from_utf8,
     time,
 };
 
-use crate::process::{Bytecode, GValue, Process, Traversal};
+use crate::process::{bytecode::Bytecode, Traversal};
 
-use super::parser::*;
+use super::serialize::*;
+
+type OneshotItem = Result<Vec<Vec<u8>>, ClientError>;
+type MpscItem = (Bytecode, oneshot::Sender<OneshotItem>);
+type PendingItem = (Vec<Vec<u8>>, oneshot::Sender<OneshotItem>);
 
 #[derive(Error, Debug)]
 pub enum ClientError {
@@ -48,61 +46,17 @@ pub enum ClientError {
 }
 
 #[derive(Debug)]
-pub struct ClientResponse(Vec<Value>);
+pub struct ClientResponse(pub Vec<Vec<u8>>);
 
-impl ClientResponse {
-    pub fn parse<T: de::DeserializeOwned>(self) -> Result<T, serde_json::Error> {
-        from_value::<T>(Value::Array(self.0.into_iter().map(unroll).collect()))
-    }
-}
-
-impl From<Vec<Value>> for ClientResponse {
-    fn from(v: Vec<Value>) -> Self {
+impl From<Vec<Vec<u8>>> for ClientResponse {
+    fn from(v: Vec<Vec<u8>>) -> Self {
         ClientResponse(v)
     }
 }
 
 pub struct Client {
-    pub(crate) tx: mpsc::UnboundedSender<EventType>,
+    tx: mpsc::UnboundedSender<EventType>,
     main: bool,
-}
-
-#[derive(Serialize, Debug)]
-#[serde(rename_all = "camelCase")]
-struct GremlinRequest {
-    request_id: GValue,
-    op: &'static str,
-    processor: &'static str,
-    args: RequestArgs,
-}
-
-#[derive(Serialize, Debug)]
-struct RequestArgs {
-    gremlin: Process,
-    aliases: RequestAliases,
-}
-
-#[derive(Serialize, Debug)]
-struct RequestAliases {
-    g: &'static str,
-}
-
-impl GremlinRequest {
-    pub fn new(bytecode: Bytecode) -> (Uuid, Self) {
-        let request_id = Uuid::new_v4();
-        (
-            request_id.clone(),
-            GremlinRequest {
-                request_id: request_id.into(),
-                op: "bytecode",
-                processor: "traversal",
-                args: RequestArgs {
-                    gremlin: Process::Bytecode(bytecode),
-                    aliases: RequestAliases { g: "g" },
-                },
-            },
-        )
-    }
 }
 
 impl Into<Message> for GremlinRequest {
@@ -120,7 +74,7 @@ impl Into<Message> for GremlinRequest {
 
 #[derive(Debug)]
 pub(crate) enum EventType {
-    Ws(GremlinResponse),
+    Ws(Vec<u8>),
     Rx(MpscItem),
     Kill,
     Timeouts,
@@ -145,21 +99,9 @@ impl Client {
         spawn(async move {
             while let Some(res) = stream.next().await {
                 if let Ok(Message::Binary(bin)) = res {
-                    if let Ok(response) = from_slice::<GremlinResponse>(&bin[..]) {
-                        if let Err(_) = tx_clone.send(Ws(response)) {
-                            break;
-                        }
-                    } else {
-                        #[cfg(test)]
-                        println!(
-                            "error parsing response:\n{}\nserde_error:\n{}",
-                            String::from_utf8(bin.clone()).unwrap(),
-                            from_slice::<GremlinResponse>(&bin[..]).unwrap_err()
-                        )
+                    if let Err(_) = tx_clone.send(Ws(bin)) {
+                        break;
                     }
-                } else {
-                    #[cfg(test)]
-                    println!("recieved invalid message type from websocket:\n{:?}", res)
                 }
             }
         });
@@ -180,37 +122,55 @@ impl Client {
             let mut timeouts: VecDeque<(u128, Uuid)> = VecDeque::new();
             while let Some(val) = rx_stream.next().await {
                 match val {
-                    Ws(res) => match res.status.code {
-                        200 | 204 => {
-                            if let Some((mut data, os_sender)) = pending.remove(&res.request_id) {
-                                res.result.data.map(|mut d| data.append(&mut d));
-                                match os_sender.send(Ok(data)) {
-                                    _ => {}
+                    Ws(res) => {
+                        let header = parse_response_header(&res);
+                        if let Ok(h) = header {
+                            if let Some(request_id) = h.request_id {
+                                match h.status.code {
+                                    200 | 204 => {
+                                        if let Some((mut data, os_sender)) =
+                                            pending.remove(&request_id)
+                                        {
+                                            data.push(res);
+                                            match os_sender.send(Ok(data)) {
+                                                _ => {}
+                                            }
+                                        }
+                                    }
+                                    206 => {
+                                        if let Some(p) = pending.get_mut(&request_id) {
+                                            p.0.push(res);
+                                        }
+                                    }
+                                    x => {
+                                        if let Some((_, os_sender)) = pending.remove(&request_id) {
+                                            match os_sender.send(Err(ClientError::ResponseError(
+                                                x as usize,
+                                                from_utf8(&res)
+                                                    .unwrap_or("invalid utf8")
+                                                    .to_string(),
+                                            ))) {
+                                                _ => {}
+                                            }
+                                        }
+                                    }
                                 }
                             }
+                            // #[cfg(test)]
+                            // println!(
+                            //     "no response uuid received:\n{}",
+                            //     to_string_pretty(&h).unwrap()
+                            // );
                         }
-                        206 => {
-                            pending
-                                .get_mut(&res.request_id)
-                                .map(|p| res.result.data.map(|mut d| p.0.append(&mut d)));
-                        }
-                        _ => {
-                            #[cfg(test)]
-                            println!(
-                                "error response received:\n{}",
-                                to_string_pretty(&res).unwrap()
-                            );
-
-                            if let Some((_, os_sender)) = pending.remove(&res.request_id) {
-                                match os_sender.send(Err(ClientError::ResponseError(
-                                    res.status.code,
-                                    to_string(&res).unwrap(),
-                                ))) {
-                                    _ => {}
-                                }
-                            }
-                        }
-                    },
+                        // #[cfg(test)]
+                        // if let Err(e) = header {
+                        //     println!(
+                        //         "error deserializing response header:\n{}\n{}",
+                        //         e,
+                        //         from_utf8(&res).unwrap_or("invalid utf8")
+                        //     );
+                        // }
+                    }
                     Rx((bytecode, os_sender)) => {
                         let (request_id, request) = GremlinRequest::new(bytecode);
                         match sink.send(request.into()).await {
@@ -274,9 +234,6 @@ impl Client {
     pub async fn execute(&self, query: Traversal) -> Result<ClientResponse, ClientError> {
         let bytecode: Bytecode = query.into();
 
-        #[cfg(test)]
-        println!("sending bytecode for execution: {:?}", &bytecode);
-
         let (os_tx, os_rx) = oneshot::channel();
         if let Err(_) = self.tx.send(Rx((bytecode, os_tx))) {
             return Err(ClientError::ExecutionError);
@@ -300,28 +257,7 @@ impl Clone for Client {
 impl Drop for Client {
     fn drop(&mut self) {
         if self.main {
-            #[cfg(test)]
-            println!("killing main client");
-
             self.tx.send(Kill).unwrap()
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::process::*;
-    use serde_json::to_string_pretty;
-
-    use super::GremlinRequest;
-    #[test]
-    fn test_request_serialization() {
-        let bt: Bytecode = g
-            .V(())
-            .addE("user")
-            .to(__.V(()).hasLabel(("user", "workout")))
-            .into();
-        let request = GremlinRequest::new(bt);
-        println!("{}", to_string_pretty(&request).unwrap())
     }
 }
