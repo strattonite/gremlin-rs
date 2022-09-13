@@ -135,7 +135,9 @@ impl Client {
                                 e,
                                 from_utf8(&res).unwrap_or("invalid_utf8")
                             );
-                            return;
+                            for (_, (_, sender)) in pending.drain() {
+                                sender.send(ClientError::NoClients)
+                            }
                         }
 
                         if let Ok(h) = header {
@@ -146,7 +148,9 @@ impl Client {
                                     to_string_pretty(&h).unwrap(),
                                     from_utf8(&res).unwrap_or("invalid_utf8")
                                 );
-                                return;
+                                for (_, (_, sender)) in pending.drain() {
+                                    sender.send(ClientError::NoClients)
+                                }
                             }
 
                             if let Some(request_id) = h.request_id {
