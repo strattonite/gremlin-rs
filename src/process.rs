@@ -16,7 +16,7 @@ lazy_static! {
     pub static ref g: TraversalSource = TraversalSource::new();
 }
 
-#[derive(Serialize, Debug, Clone, Deserialize)]
+#[derive(Serialize, Debug, Clone, Deserialize, PartialEq, Eq, Hash)]
 #[serde(rename_all = "lowercase")]
 pub enum Cardinality {
     List,
@@ -24,7 +24,7 @@ pub enum Cardinality {
     Single,
 }
 
-#[derive(Serialize, Debug, Clone, Deserialize)]
+#[derive(Serialize, Debug, Clone, Deserialize, PartialEq, Eq, Hash)]
 #[serde(rename_all = "lowercase")]
 pub enum Operator {
     Abs,
@@ -61,8 +61,8 @@ pub enum P {
     Inside(RangeInput),
     Outside(RangeInput),
     Between(RangeInput),
-    Within(Vec<GsonV2>),
-    Without(Vec<GsonV2>),
+    // Within(Vec<GsonV2>),
+    // Without(Vec<GsonV2>),
 }
 
 #[derive(Serialize, Debug, Clone, Deserialize)]
@@ -74,7 +74,25 @@ impl From<(f64, f64)> for RangeInput {
     }
 }
 
-#[derive(Serialize, Debug, Clone, Deserialize)]
+impl From<(f32, f32)> for RangeInput {
+    fn from(f: (f32, f32)) -> Self {
+        Self((f.0.into(), f.1.into()))
+    }
+}
+
+impl From<(i64, i64)> for RangeInput {
+    fn from(f: (i64, i64)) -> Self {
+        Self((f.0.into(), f.1.into()))
+    }
+}
+
+impl From<(i32, i32)> for RangeInput {
+    fn from(f: (i32, i32)) -> Self {
+        Self((f.0.into(), f.1.into()))
+    }
+}
+
+#[derive(Serialize, Debug, Clone, Deserialize, PartialEq, Eq, Hash)]
 #[serde(tag = "predicate", content = "value")]
 #[serde(rename_all = "camelCase")]
 pub enum TextP {
@@ -86,7 +104,7 @@ pub enum TextP {
     NotContaining(String),
 }
 
-#[derive(Serialize, Debug, Clone, Deserialize)]
+#[derive(Serialize, Debug, Clone, Deserialize, PartialEq, Eq, Hash)]
 #[serde(rename_all = "lowercase")]
 pub enum Order {
     Asc,

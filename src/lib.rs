@@ -42,11 +42,7 @@ mod tests {
 
             let result = timeout(
                 Duration::from_secs(5),
-                g.V(())
-                    .sample((25,))
-                    .group(())
-                    .by(__.label())
-                    .to_list(&client),
+                g.V(()).sample(25).group(()).by(__.label()).to_list(&client),
             )
             .await
             .unwrap()
@@ -61,7 +57,7 @@ mod tests {
             let result = timeout(
                 Duration::from_secs(5),
                 g.V(())
-                    .sample((25,))
+                    .sample(25)
                     .group(())
                     .by(__.label())
                     .by(__.propertyMap(()))
@@ -81,7 +77,7 @@ mod tests {
             let result = timeout(
                 Duration::from_secs(5),
                 g.V(())
-                    .sample((25,))
+                    .sample(25)
                     .group(())
                     .by(__.label())
                     .by(__.propertyMap(()))
