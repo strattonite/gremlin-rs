@@ -35,6 +35,12 @@ impl<T: Into<GsonV2> + Debug + Clone> From<T> for BytecodeStep {
     }
 }
 
+impl<T: Into<GsonV2> + Debug + Clone> From<Vec<T>> for BytecodeStep {
+    fn from(a: Vec<T>) -> Self {
+        Self(a.into_iter().map(|e| e.into()).collect())
+    }
+}
+
 impl From<()> for BytecodeStep {
     fn from(_: ()) -> Self {
         Self(vec![])
