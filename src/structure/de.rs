@@ -671,7 +671,7 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
         if _name == "VertexProperty" {
             println!(
                 "{}",
-                self.take_next(50)
+                self.peek_next(50)
                     .map(|x| from_utf8(x).unwrap())
                     .unwrap_or("invalid len")
             );
@@ -743,6 +743,10 @@ impl<'de, 'a> SeqAccess<'de> for CommaSeparated<'a, 'de> {
     {
         match self.de.peek_byte()? {
             b']' => {
+                println!(
+                    "end of sequence detected, depth: {}",
+                    self.de.data_depth - 1
+                );
                 self.de.data_depth -= 1;
                 self.de.input = &self.de.input[1..];
                 return Ok(None);
@@ -764,6 +768,15 @@ impl<'de, 'a> SeqAccess<'de> for CommaSeparated<'a, 'de> {
             _ => {
                 if self.first {
                     let t = self.check_traverser && self.de.unwrap_traverser()?;
+                    if t {
+                        println!(
+                            "unwrapped traverser, deserializing value: {}",
+                            self.de
+                                .peek_next(50)
+                                .map(|x| from_utf8(x).unwrap())
+                                .unwrap_or("invalid len")
+                        )
+                    }
                     let val = seed.deserialize(&mut *self.de).map(Some);
 
                     if t {
