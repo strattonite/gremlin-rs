@@ -10,7 +10,7 @@ mod tests {
     use super::*;
     use process::*;
     use serde_json::to_string_pretty;
-    use std::{env, time::Duration};
+    use std::{collections::HashMap, env, time::Duration};
     use structure::*;
     use tokio::time::timeout;
 
@@ -37,6 +37,26 @@ mod tests {
             println!("testing response data parsing");
             let v: Vec<gson::GsonV2> = result.parse().unwrap();
             println!("{}", to_string_pretty(&v).unwrap());
+
+            println!("testing nested query");
+
+            let result = timeout(
+                Duration::from_secs(5),
+                g.V(())
+                    .sample((25,))
+                    .group(())
+                    .by(__.label())
+                    .to_list(&client),
+            )
+            .await
+            .unwrap()
+            .unwrap();
+
+            println!("testing nested response parsing");
+            let v: Vec<HashMap<String, gson::GsonGraph<gson::GsonV2>>> = result.parse().unwrap();
+            for (k, v) in v.get(0).unwrap().iter() {
+                println!("{}:\n{}", k, to_string_pretty(&v).unwrap());
+            }
         } else {
             println!("integration test not run, missing TEST_URL env var")
         }

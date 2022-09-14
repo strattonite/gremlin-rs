@@ -66,11 +66,6 @@ impl Into<Message> for GremlinRequest {
     fn into(self) -> Message {
         let mut data = b"!application/vnd.gremlin-v2.0+json".to_vec();
         data.append(&mut to_vec(&self).unwrap());
-        #[cfg(test)]
-        println!(
-            "sending request:\n{}",
-            String::from_utf8(data.clone()).unwrap()
-        );
         Message::Binary(data)
     }
 }
@@ -204,8 +199,6 @@ impl Client {
                         };
                     }
                     Kill => {
-                        #[cfg(test)]
-                        println!("kill signal received");
                         rx_stream.close();
                         sink.send(Message::Close(None)).await.unwrap();
                         for (_, (_, sender)) in pending.drain() {
@@ -250,9 +243,6 @@ impl Client {
         let bytecode: Bytecode = query.into();
 
         let (os_tx, os_rx) = oneshot::channel();
-
-        #[cfg(test)]
-        println!("sending bytecode for execution");
 
         if let Err(_) = self.tx.send(Rx((bytecode, os_tx))) {
             return Err(ClientError::ExecutionError);

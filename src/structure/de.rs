@@ -408,13 +408,7 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
             b'[' => self.deserialize_seq(visitor),
             b'"' => self.deserialize_string(visitor),
             b't' | b'f' => self.deserialize_bool(visitor),
-            x => {
-                println!(
-                    "error deserializing any, current input:\n{}",
-                    from_utf8(&self.input).unwrap()
-                );
-                Err(GsonError::invalid_char("valid json", *x))
-            }
+            x => Err(GsonError::invalid_char("valid json", *x)),
         }
     }
 
@@ -627,9 +621,7 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
             return Err(GsonError::invalid_char("[", b));
         }
         self.data_depth += 1;
-        println!("deserializing seq");
         let val = visitor.visit_seq(CommaSeparated::new(self, self.data_depth == 1));
-        println!("finished deserializing seq");
         val
     }
 
@@ -743,10 +735,6 @@ impl<'de, 'a> SeqAccess<'de> for CommaSeparated<'a, 'de> {
     {
         match self.de.peek_byte()? {
             b']' => {
-                println!(
-                    "end of sequence detected, input:\n{}",
-                    from_utf8(self.de.input).unwrap()
-                );
                 self.de.data_depth -= 1;
                 self.de.input = &self.de.input[1..];
                 return Ok(None);
@@ -766,7 +754,6 @@ impl<'de, 'a> SeqAccess<'de> for CommaSeparated<'a, 'de> {
             _ => {
                 if self.first {
                     let t = self.check_traverser && self.de.unwrap_traverser()?;
-                    println!("unwrapped traverser: {}", t);
                     let val = seed.deserialize(&mut *self.de).map(Some);
 
                     if t {
@@ -774,7 +761,6 @@ impl<'de, 'a> SeqAccess<'de> for CommaSeparated<'a, 'de> {
                             b"}}" => (),
                             x => return Err(GsonError::invalid_str("}}", x)),
                         }
-                        println!("input:\n{}", from_utf8(self.de.input).unwrap());
                     }
                     return val;
                 } else {
