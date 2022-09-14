@@ -621,6 +621,7 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
             return Err(GsonError::invalid_char("[", b));
         }
         self.data_depth += 1;
+        println!("deserialing seq, depth: {}", self.data_depth);
         let val = visitor.visit_seq(CommaSeparated::new(self, self.data_depth == 1));
         val
     }
@@ -668,7 +669,12 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
         #[cfg(test)]
         println!("deserializing struct: {}", _name);
         if _name == "VertexProperty" {
-            println!("{}", from_utf8(self.input).unwrap());
+            println!(
+                "{}",
+                self.take_next(50)
+                    .map(|x| from_utf8(x).unwrap())
+                    .unwrap_or("invalid len")
+            );
         }
         let val = self.deserialize_map(visitor);
         val
