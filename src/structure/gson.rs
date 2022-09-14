@@ -1,7 +1,7 @@
 use super::*;
 use crate::process::*;
 use serde::{de::*, ser::*};
-use std::{fmt::Debug, marker::PhantomData, time};
+use std::{collections::HashMap, fmt::Debug, marker::PhantomData, time};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "@type", content = "@value")]
@@ -124,6 +124,8 @@ pub enum GsonV2 {
     TextPredicate(TextP),
     Order(Order),
     Bytecode(bytecode::Bytecode),
+    List(Vec<GsonV2>),
+    Map(HashMap<String, GsonV2>),
 }
 
 impl Serialize for GsonV2 {
@@ -135,6 +137,20 @@ impl Serialize for GsonV2 {
             Self::String(s) => serializer.serialize_str(s),
             Self::Null => serializer.serialize_none(),
             Self::Bool(b) => serializer.serialize_bool(*b),
+            Self::List(l) => {
+                let mut seq = serializer.serialize_seq(Some(l.len()))?;
+                for e in l.iter() {
+                    seq.serialize_element(e)?;
+                }
+                seq.end()
+            }
+            Self::Map(hm) => {
+                let mut map = serializer.serialize_map(Some(hm.len()))?;
+                for (k, v) in hm.iter() {
+                    map.serialize_entry(k, v)?;
+                }
+                map.end()
+            }
 
             _ => {
                 let mut map = serializer.serialize_map(Some(2))?;
@@ -210,6 +226,8 @@ impl Serialize for GsonV2 {
                     Self::String(_) => panic!(),
                     Self::Bool(_) => panic!(),
                     Self::Null => panic!(),
+                    Self::List(_) => panic!(),
+                    Self::Map(_) => panic!(),
                 }
                 map.end()
             }
@@ -301,13 +319,24 @@ impl<'de> Visitor<'de> for GsonVisitor {
         Ok(GsonV2::Null)
     }
 
+    fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
+    where
+        A: SeqAccess<'de>,
+    {
+        let mut list = Vec::new();
+        while let Some(v) = seq.next_element()? {
+            list.push(v)
+        }
+        return Ok(GsonV2::List(list));
+    }
+
     fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
     where
         A: MapAccess<'de>,
     {
-        if let Some((t, v)) = map.next_entry()? {
-            match t {
-                "@type" => match v {
+        if let Some(k) = map.next_key()? {
+            match k {
+                "@type" => match map.next_value()? {
                     "g:Date" => {
                         if let Some(("@value", v)) = map.next_entry::<&str, i64>()? {
                             map.next_entry::<(), ()>()?;
@@ -339,7 +368,6 @@ impl<'de> Visitor<'de> for GsonVisitor {
                     "g:VertexProperty" => {
                         if let Some(("@value", v)) = map.next_entry::<&str, VertexProperty>()? {
                             map.next_entry::<(), ()>()?;
-                            println!("deserialized vertex property:\n{:?}", v);
                             return Ok(GsonV2::VertexProperty(v));
                         }
                         return Err(serde::de::Error::missing_field("@value"));
@@ -407,10 +435,19 @@ impl<'de> Visitor<'de> for GsonVisitor {
                         ))
                     }
                 },
-                x => return Err(serde::de::Error::unknown_field(x, &["@type", "@value"])),
+                x => {
+                    let mut hm = HashMap::new();
+                    let v: GsonV2 = map.next_value()?;
+                    hm.insert(x.to_string(), v);
+                    while let Some((k, v)) = map.next_entry()? {
+                        hm.insert(k, v);
+                    }
+                    return Ok(GsonV2::Map(hm));
+                }
             }
+        } else {
+            return Ok(GsonV2::Map(HashMap::new()));
         }
-        Err(serde::de::Error::missing_field("@type"))
     }
 }
 
