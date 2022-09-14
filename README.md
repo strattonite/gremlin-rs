@@ -10,12 +10,9 @@
 - only GLV queries supported (no string based)
 - toList works slightly differently to most GLV clients where traversal is initiated with "withRemote()",
 instead client passed to traversal at execution stage, allows many traversals to use same client reference
-- g:Path data structure not yet implemented as well as a couple of process data types
 - driver::Client recieves queries to execute and handles reponses on same (tokio) thread so for very large throughput use ClientPool
-- due to AWS Neptune's DNS based request routing, when using ClientPool it is advised to create one read client for each read-only db server in the cluster to ensure requests are evenly distributed
 
 ## Possible future features
-2. implement g:Path
 3. move to GraphSON V3 from V2?
 5. implement LocalClient?
 6. implement authentication for server communication?

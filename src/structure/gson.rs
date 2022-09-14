@@ -549,6 +549,42 @@ impl<'de> Visitor<'de> for GsonVisitor {
     }
 }
 
+impl From<GsonNumber> for GsonV2 {
+    fn from(n: GsonNumber) -> Self {
+        match n {
+            GsonNumber::Double(d) => Self::Double(d),
+            GsonNumber::Float(d) => Self::Float(d),
+            GsonNumber::Integer(d) => Self::Integer(d),
+            GsonNumber::Long(d) => Self::Long(d),
+        }
+    }
+}
+
+impl From<GsonGraph> for GsonV2 {
+    fn from(n: GsonGraph) -> Self {
+        match n {
+            GsonGraph::Edge(d) => Self::Edge(d),
+            GsonGraph::Vertex(d) => Self::Vertex(d),
+            GsonGraph::VertexProperty(d) => Self::VertexProperty(d),
+            GsonGraph::Property(d) => Self::Property(d),
+            GsonGraph::Path(d) => Self::Path(d),
+        }
+    }
+}
+
+impl From<GsonProcess> for GsonV2 {
+    fn from(n: GsonProcess) -> Self {
+        match n {
+            GsonProcess::Cardinality(d) => Self::Cardinality(d),
+            GsonProcess::Operator(d) => Self::Operator(d),
+            GsonProcess::Predicate(d) => Self::Predicate(d),
+            GsonProcess::TextPredicate(d) => Self::TextPredicate(d),
+            GsonProcess::Order(d) => Self::Order(d),
+            GsonProcess::Bytecode(d) => Self::Bytecode(d),
+        }
+    }
+}
+
 impl From<time::Duration> for GsonV2 {
     fn from(v: std::time::Duration) -> Self {
         Self::Timestamp(v.as_millis() as i64)
