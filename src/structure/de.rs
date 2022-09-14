@@ -339,6 +339,7 @@ impl<'de> Deserializer<'de> {
     fn unwrap_traverser(&mut self) -> GResult<bool> {
         if self.input.len() > 23 {
             if *br#"{"@type":"g:Traverser","# == self.input[..23] {
+                println!("unwrapping traverser:\n{}", from_utf8(self.input).unwrap());
                 let _ = self.get_gv_type()?;
                 if self.input[..8] != *br#"{"bulk":"# {
                     return Err(GsonError::invalid_str(r#"{"bulk":"#, &self.input[..8]));
