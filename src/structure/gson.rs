@@ -337,10 +337,12 @@ impl<'de> Visitor<'de> for GsonVisitor {
                         return Err(serde::de::Error::missing_field("@value"));
                     }
                     "g:VertexProperty" => {
-                        if let Some(("@value", v)) = map.next_entry::<&str, VertexProperty>()? {
+                        if let Some(("@value", v)) =
+                            map.next_entry::<&str, VertexPropertyOwned>()?
+                        {
                             map.next_entry::<(), ()>()?;
                             println!("deserialized vertex property:\n{:?}", v);
-                            return Ok(GsonV2::VertexProperty(v));
+                            return Ok(GsonV2::VertexProperty(v.into()));
                         }
                         return Err(serde::de::Error::missing_field("@value"));
                     }

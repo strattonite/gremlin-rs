@@ -33,3 +33,20 @@ pub struct Property {
     pub key: String,
     pub value: Box<gson::GsonV2>,
 }
+
+#[derive(Deserialize, Debug, Serialize, Clone)]
+pub struct VertexPropertyOwned {
+    pub id: i32,
+    pub label: String,
+    pub value: gson::GsonV2,
+}
+
+impl Into<VertexProperty> for VertexPropertyOwned {
+    fn into(self) -> VertexProperty {
+        VertexProperty {
+            id: self.id,
+            label: self.label,
+            value: Box::new(self.value),
+        }
+    }
+}
