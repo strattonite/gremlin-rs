@@ -749,6 +749,8 @@ impl<'de, 'a> SeqAccess<'de> for CommaSeparated<'a, 'de> {
                         b"}}" => (),
                         x => return Err(GsonError::invalid_str("}}", x)),
                     }
+                } else {
+                    println!("did not unwrap traverser")
                 }
                 return val;
             }
@@ -763,6 +765,8 @@ impl<'de, 'a> SeqAccess<'de> for CommaSeparated<'a, 'de> {
                             b"}}" => (),
                             x => return Err(GsonError::invalid_str("}}", x)),
                         }
+                    } else {
+                        println!("did not unwrap traverser")
                     }
                     return val;
                 } else {
