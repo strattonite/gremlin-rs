@@ -10,7 +10,7 @@ mod tests {
     use super::*;
     use process::*;
     use serde_json::to_string_pretty;
-    use std::{collections::HashMap, env, time::Duration};
+    use std::{collections::HashMap, env, str::from_utf8, time::Duration};
     use structure::*;
     use tokio::time::timeout;
 
@@ -109,6 +109,19 @@ mod tests {
 
             let v: gson::GsonV2 = result.parse().unwrap().remove(0);
             println!("{:?}", v);
+
+            let result = g
+                .V(())
+                .outE(())
+                .inV(())
+                .path()
+                .to_list(&client)
+                .await
+                .unwrap();
+            println!(
+                "path response:\n{}",
+                from_utf8(result.0.get(0).unwrap()).unwrap()
+            );
         } else {
             println!("integration test not run, missing TEST_URL env var")
         }
