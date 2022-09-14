@@ -744,6 +744,7 @@ impl<'de, 'a> SeqAccess<'de> for CommaSeparated<'a, 'de> {
                 let t = self.check_traverser && self.de.unwrap_traverser()?;
                 let val = seed.deserialize(&mut *self.de).map(Some);
                 if t {
+                    println!("{}", from_utf8(&self.de.input[..100]).unwrap());
                     match self.de.take_next(2)? {
                         b"}}" => (),
                         x => return Err(GsonError::invalid_str("}}", x)),
@@ -757,6 +758,7 @@ impl<'de, 'a> SeqAccess<'de> for CommaSeparated<'a, 'de> {
                     let val = seed.deserialize(&mut *self.de).map(Some);
 
                     if t {
+                        println!("1)\n{}", from_utf8(&self.de.input[..100]).unwrap());
                         match self.de.take_next(2)? {
                             b"}}" => (),
                             x => return Err(GsonError::invalid_str("}}", x)),
