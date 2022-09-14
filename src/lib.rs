@@ -53,7 +53,7 @@ mod tests {
             .unwrap();
 
             println!("testing nested response parsing");
-            println!("{}", from_utf8(result.get(0)).unwrap());
+            println!("{}", from_utf8(result.0.get(0).unwrap()).unwrap());
             let v: Vec<HashMap<String, gson::GsonGraph<gson::GsonV2>>> = result.parse().unwrap();
             for (k, v) in v.get(0).unwrap().iter() {
                 println!("{}:\n{}", k, to_string_pretty(&v).unwrap());
