@@ -392,6 +392,10 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
                                 self.deserialize_struct("Property", &["key", "value"], visitor)
                             }
                             b"g:Vertex" => {
+                                println!(
+                                    "deserializing vertex:\n{}",
+                                    from_utf8(&self.input[..100]).unwrap()
+                                );
                                 self.deserialize_struct("Vertex", &["id", "label"], visitor)
                             }
                             b"g:VertexProperty" => self.deserialize_struct(
