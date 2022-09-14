@@ -10,7 +10,7 @@ mod tests {
     use super::*;
     use process::*;
     use serde_json::to_string_pretty;
-    use std::{collections::HashMap, env, str::from_utf8, time::Duration};
+    use std::{collections::HashMap, env, time::Duration};
     use structure::*;
     use tokio::time::timeout;
 
@@ -70,8 +70,6 @@ mod tests {
             .await
             .unwrap()
             .unwrap();
-
-            println!("{}", from_utf8(result.0.get(0).unwrap()).unwrap());
 
             println!("testing double nested response parsing");
             let v: HashMap<String, HashMap<String, Vec<gson::GsonV2>>> =

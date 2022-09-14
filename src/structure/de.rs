@@ -621,7 +621,6 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
             return Err(GsonError::invalid_char("[", b));
         }
         self.data_depth += 1;
-        println!("deserialing seq, depth: {}", self.data_depth);
         let val = visitor.visit_seq(CommaSeparated::new(self, self.data_depth == 1));
         val
     }
@@ -668,14 +667,6 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
     {
         #[cfg(test)]
         println!("deserializing struct: {}", _name);
-        if _name == "VertexProperty" {
-            println!(
-                "{}",
-                self.peek_next(50)
-                    .map(|x| from_utf8(x).unwrap())
-                    .unwrap_or("invalid len")
-            );
-        }
         let val = self.deserialize_map(visitor);
         val
     }
@@ -743,7 +734,6 @@ impl<'de, 'a> SeqAccess<'de> for CommaSeparated<'a, 'de> {
     {
         match self.de.peek_byte()? {
             b']' => {
-                println!("end of sequence detected, depth: {}", self.de.data_depth);
                 self.de.data_depth -= 1;
                 self.de.input = &self.de.input[1..];
                 return Ok(None);
@@ -757,42 +747,19 @@ impl<'de, 'a> SeqAccess<'de> for CommaSeparated<'a, 'de> {
                         b"}}" => (),
                         x => return Err(GsonError::invalid_str("}}", x)),
                     }
-                } else {
-                    println!("did not unwrap traverser")
                 }
                 return val;
             }
             _ => {
                 if self.first {
                     let t = self.check_traverser && self.de.unwrap_traverser()?;
-                    let d = self.de.data_depth;
-                    if t {
-                        println!(
-                            "({}) unwrapped traverser, deserializing value: {}",
-                            d,
-                            self.de
-                                .peek_next(50)
-                                .map(|x| from_utf8(x).unwrap())
-                                .unwrap_or("invalid len")
-                        )
-                    }
                     let val = seed.deserialize(&mut *self.de).map(Some);
 
                     if t {
-                        println!(
-                            "({}) deserialized val, remaining input: {}",
-                            d,
-                            self.de
-                                .peek_next(50)
-                                .map(|x| from_utf8(x).unwrap())
-                                .unwrap_or("invalid len")
-                        );
                         match self.de.take_next(2)? {
                             b"}}" => (),
                             x => return Err(GsonError::invalid_str("}}", x)),
                         }
-                    } else {
-                        println!("did not unwrap traverser")
                     }
                     return val;
                 } else {
