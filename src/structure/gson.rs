@@ -68,6 +68,8 @@ pub enum GsonGraph {
     VertexProperty(VertexProperty),
     #[serde(rename = "g:Property")]
     Property(Property),
+    #[serde(rename = "g:Path")]
+    Path(Path),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -126,6 +128,14 @@ pub enum GsonV2 {
     Bytecode(bytecode::Bytecode),
     List(Vec<GsonV2>),
     Map(HashMap<String, GsonV2>),
+    Path(Path),
+    Binding(Binding),
+    Pick(Pick),
+    Pop(Pop),
+    Scope(Scope),
+    T(T),
+    Direction(Direction),
+    Merge(Merge),
 }
 
 impl Serialize for GsonV2 {
@@ -221,6 +231,38 @@ impl Serialize for GsonV2 {
                     }
                     Self::Operator(d) => {
                         map.serialize_entry("@type", "g:Operator")?;
+                        map.serialize_entry("@value", d)?;
+                    }
+                    Self::Path(d) => {
+                        map.serialize_entry("@type", "g:Path")?;
+                        map.serialize_entry("@value", d)?;
+                    }
+                    Self::Pick(d) => {
+                        map.serialize_entry("@type", "g:Pick")?;
+                        map.serialize_entry("@value", d)?;
+                    }
+                    Self::Pop(d) => {
+                        map.serialize_entry("@type", "g:Pop")?;
+                        map.serialize_entry("@value", d)?;
+                    }
+                    Self::Scope(d) => {
+                        map.serialize_entry("@type", "g:Scope")?;
+                        map.serialize_entry("@value", d)?;
+                    }
+                    Self::T(d) => {
+                        map.serialize_entry("@type", "g:T")?;
+                        map.serialize_entry("@value", d)?;
+                    }
+                    Self::Direction(d) => {
+                        map.serialize_entry("@type", "g:Direction")?;
+                        map.serialize_entry("@value", d)?;
+                    }
+                    Self::Merge(d) => {
+                        map.serialize_entry("@type", "g:Merge")?;
+                        map.serialize_entry("@value", d)?;
+                    }
+                    Self::Binding(d) => {
+                        map.serialize_entry("@type", "g:Binding")?;
                         map.serialize_entry("@value", d)?;
                     }
                     Self::String(_) => panic!(),
@@ -425,6 +467,62 @@ impl<'de> Visitor<'de> for GsonVisitor {
                         if let Some(("@value", v)) = map.next_entry::<&str, Property>()? {
                             map.next_entry::<(), ()>()?;
                             return Ok(GsonV2::Property(v));
+                        }
+                        return Err(serde::de::Error::missing_field("@value"));
+                    }
+                    "g:Path" => {
+                        if let Some(("@value", v)) = map.next_entry::<&str, Path>()? {
+                            map.next_entry::<(), ()>()?;
+                            return Ok(GsonV2::Path(v));
+                        }
+                        return Err(serde::de::Error::missing_field("@value"));
+                    }
+                    "g:Binding" => {
+                        if let Some(("@value", v)) = map.next_entry::<&str, Binding>()? {
+                            map.next_entry::<(), ()>()?;
+                            return Ok(GsonV2::Binding(v));
+                        }
+                        return Err(serde::de::Error::missing_field("@value"));
+                    }
+                    "g:Merge" => {
+                        if let Some(("@value", v)) = map.next_entry::<&str, Merge>()? {
+                            map.next_entry::<(), ()>()?;
+                            return Ok(GsonV2::Merge(v));
+                        }
+                        return Err(serde::de::Error::missing_field("@value"));
+                    }
+                    "g:Direction" => {
+                        if let Some(("@value", v)) = map.next_entry::<&str, Direction>()? {
+                            map.next_entry::<(), ()>()?;
+                            return Ok(GsonV2::Direction(v));
+                        }
+                        return Err(serde::de::Error::missing_field("@value"));
+                    }
+                    "g:T" => {
+                        if let Some(("@value", v)) = map.next_entry::<&str, T>()? {
+                            map.next_entry::<(), ()>()?;
+                            return Ok(GsonV2::T(v));
+                        }
+                        return Err(serde::de::Error::missing_field("@value"));
+                    }
+                    "g:Scope" => {
+                        if let Some(("@value", v)) = map.next_entry::<&str, Scope>()? {
+                            map.next_entry::<(), ()>()?;
+                            return Ok(GsonV2::Scope(v));
+                        }
+                        return Err(serde::de::Error::missing_field("@value"));
+                    }
+                    "g:Pop" => {
+                        if let Some(("@value", v)) = map.next_entry::<&str, Pop>()? {
+                            map.next_entry::<(), ()>()?;
+                            return Ok(GsonV2::Pop(v));
+                        }
+                        return Err(serde::de::Error::missing_field("@value"));
+                    }
+                    "g:Pick" => {
+                        if let Some(("@value", v)) = map.next_entry::<&str, Pick>()? {
+                            map.next_entry::<(), ()>()?;
+                            return Ok(GsonV2::Pick(v));
                         }
                         return Err(serde::de::Error::missing_field("@value"));
                     }

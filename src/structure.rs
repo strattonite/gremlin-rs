@@ -33,3 +33,9 @@ pub struct Property {
     pub key: String,
     pub value: Box<gson::GsonV2>,
 }
+
+#[derive(Deserialize, Debug, Serialize, Clone)]
+pub struct Path {
+    pub labels: Vec<Vec<gson::GsonV2>>,
+    pub objects: Vec<gson::GsonV2>,
+}

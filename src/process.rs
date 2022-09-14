@@ -112,6 +112,59 @@ pub enum Order {
     Shuffle,
 }
 
+#[derive(Serialize, Debug, Clone, Deserialize)]
+pub struct Binding {
+    key: String,
+    value: Box<GsonV2>,
+}
+
+#[derive(Serialize, Debug, Clone, Deserialize, PartialEq, Eq, Hash)]
+#[serde(rename_all = "lowercase")]
+pub enum Pick {
+    None,
+    Any,
+}
+
+#[derive(Serialize, Debug, Clone, Deserialize, PartialEq, Eq, Hash)]
+#[serde(rename_all = "lowercase")]
+pub enum Pop {
+    All,
+    First,
+    Last,
+    Mixed,
+}
+
+#[derive(Serialize, Debug, Clone, Deserialize, PartialEq, Eq, Hash)]
+#[serde(rename_all = "lowercase")]
+pub enum Scope {
+    Global,
+    Local,
+}
+
+#[derive(Serialize, Debug, Clone, Deserialize, PartialEq, Eq, Hash)]
+#[serde(rename_all = "lowercase")]
+pub enum T {
+    Id,
+    Key,
+    Label,
+    Value,
+}
+
+#[derive(Serialize, Debug, Clone, Deserialize, PartialEq, Eq, Hash)]
+#[serde(rename_all = "UPPERCASE")]
+pub enum Direction {
+    Both,
+    In,
+    Out,
+}
+
+#[derive(Serialize, Debug, Clone, Deserialize, PartialEq, Eq, Hash)]
+#[serde(rename_all = "camelCase")]
+pub enum Merge {
+    OnCreate,
+    OnMatch,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
