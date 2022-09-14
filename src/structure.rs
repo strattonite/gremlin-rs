@@ -23,7 +23,7 @@ pub struct Vertex {
 
 #[derive(Deserialize, Debug, Serialize, Clone)]
 pub struct VertexProperty {
-    pub id: i64,
+    pub id: i32,
     pub label: String,
     pub value: Box<gson::GsonV2>,
 }
