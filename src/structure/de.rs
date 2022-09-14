@@ -339,7 +339,6 @@ impl<'de> Deserializer<'de> {
     fn unwrap_traverser(&mut self) -> GResult<bool> {
         if self.input.len() > 23 {
             if *br#"{"@type":"g:Traverser","# == self.input[..23] {
-                println!("unwrapping traverser:\n{}", from_utf8(self.input).unwrap());
                 let _ = self.get_gv_type()?;
                 if self.input[..8] != *br#"{"bulk":"# {
                     return Err(GsonError::invalid_str(r#"{"bulk":"#, &self.input[..8]));
@@ -668,7 +667,9 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
     {
         #[cfg(test)]
         println!("deserializing struct: {}", _name);
-
+        if _name == "VertexProperty" {
+            println!("{}", from_utf8(self.input).unwrap());
+        }
         let val = self.deserialize_map(visitor);
         val
     }
@@ -745,7 +746,6 @@ impl<'de, 'a> SeqAccess<'de> for CommaSeparated<'a, 'de> {
                 let t = self.check_traverser && self.de.unwrap_traverser()?;
                 let val = seed.deserialize(&mut *self.de).map(Some);
                 if t {
-                    println!("{}", from_utf8(&self.de.input).unwrap());
                     match self.de.take_next(2)? {
                         b"}}" => (),
                         x => return Err(GsonError::invalid_str("}}", x)),
@@ -761,7 +761,6 @@ impl<'de, 'a> SeqAccess<'de> for CommaSeparated<'a, 'de> {
                     let val = seed.deserialize(&mut *self.de).map(Some);
 
                     if t {
-                        println!("1)\n{}", from_utf8(&self.de.input).unwrap());
                         match self.de.take_next(2)? {
                             b"}}" => (),
                             x => return Err(GsonError::invalid_str("}}", x)),
