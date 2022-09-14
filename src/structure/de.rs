@@ -177,7 +177,7 @@ impl<'de> Deserializer<'de> {
         let mut end = 0;
         loop {
             match self.get_byte(end)? {
-                b'0'..=b'9' => end += 1,
+                b'0'..=b'9' | b'-' => end += 1,
                 _ => {
                     let v = FromStr::from_str(from_utf8(self.take_next(end)?)?)
                         .map_err(|e: ParseIntError| e.into());
@@ -743,10 +743,7 @@ impl<'de, 'a> SeqAccess<'de> for CommaSeparated<'a, 'de> {
     {
         match self.de.peek_byte()? {
             b']' => {
-                println!(
-                    "end of sequence detected, depth: {}",
-                    self.de.data_depth - 1
-                );
+                println!("end of sequence detected, depth: {}", self.de.data_depth);
                 self.de.data_depth -= 1;
                 self.de.input = &self.de.input[1..];
                 return Ok(None);
