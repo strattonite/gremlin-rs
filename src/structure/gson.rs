@@ -62,15 +62,15 @@ pub enum GsonProcess {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "@type", content = "@value")]
-pub enum GsonGraph<T: Debug + Clone> {
+pub enum GsonGraph {
     #[serde(rename = "g:Edge")]
     Edge(Edge),
     #[serde(rename = "g:Vertex")]
     Vertex(Vertex),
     #[serde(rename = "g:VertexProperty")]
-    VertexProperty(VertexProperty<T>),
+    VertexProperty(VertexProperty),
     #[serde(rename = "g:Property")]
-    Property(Property<T>),
+    Property(Property),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -106,7 +106,7 @@ impl From<()> for GsonLiteral {
 }
 
 #[derive(Debug, Clone)]
-pub enum GsonV2<T: Debug + Clone = String> {
+pub enum GsonV2 {
     Date(i64),
     Double(f64),
     Float(f32),
@@ -116,8 +116,8 @@ pub enum GsonV2<T: Debug + Clone = String> {
     UUID(Uuid),
     Edge(Edge),
     Vertex(Vertex),
-    VertexProperty(VertexProperty<T>),
-    Property(Property<T>),
+    VertexProperty(VertexProperty),
+    Property(Property),
     String(String),
     Bool(bool),
     Null,
@@ -129,28 +129,28 @@ pub enum GsonV2<T: Debug + Clone = String> {
     Bytecode(bytecode::Bytecode),
 }
 
-impl<T: Debug + Clone + Serialize> TryInto<Vec<u8>> for GsonV2<T> {
-    type Error = serde_json::Error;
-    fn try_into(self) -> Result<Vec<u8>, Self::Error> {
-        serde_json::to_vec(&self)
-    }
-}
+// impl TryInto<Vec<u8>> for GsonV2  {
+//     type Error = serde_json::Error;
+//     fn try_into(self) -> Result<Vec<u8>, Self::Error> {
+//         serde_json::to_vec(&self)
+//     }
+// }
 
-impl<T: Debug + Clone + DeserializeOwned> TryFrom<Vec<u8>> for GsonV2<T> {
-    type Error = GsonError;
-    fn try_from(v: Vec<u8>) -> Result<Self, Self::Error> {
-        from_vec::<Self>(&v)
-    }
-}
+// impl TryFrom<Vec<u8>> for GsonV2  {
+//     type Error = GsonError;
+//     fn try_from(v: Vec<u8>) -> Result<Self, Self::Error> {
+//         from_vec::<Self>(&v)
+//     }
+// }
 
-impl<'de, T: Debug + Clone + Deserialize<'de>> TryFrom<&'de Vec<u8>> for GsonV2<T> {
-    type Error = GsonError;
-    fn try_from(v: &'de Vec<u8>) -> Result<Self, Self::Error> {
-        from_vec::<Self>(&v)
-    }
-}
+// impl<'de> TryFrom<&'de Vec<u8>> for GsonV2  {
+//     type Error = GsonError;
+//     fn try_from(v: &'de Vec<u8>) -> Result<Self, Self::Error> {
+//         from_vec::<Self>(&v)
+//     }
+// }
 
-impl<T: Serialize + Debug + Clone> Serialize for GsonV2<T> {
+impl Serialize for GsonV2 {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -241,20 +241,20 @@ impl<T: Serialize + Debug + Clone> Serialize for GsonV2<T> {
     }
 }
 
-impl<'de, T: Deserialize<'de> + Debug + Clone> Deserialize<'de> for GsonV2<T> {
+impl<'de> Deserialize<'de> for GsonV2 {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
     {
-        deserializer.deserialize_any(GsonVisitor::<T>::new())
+        deserializer.deserialize_any(GsonVisitor::new())
     }
 }
 
-struct GsonVisitor<T: Debug + Clone> {
-    marker: PhantomData<fn() -> GsonV2<T>>,
+struct GsonVisitor {
+    marker: PhantomData<fn() -> GsonV2>,
 }
 
-impl<T: Debug + Clone> GsonVisitor<T> {
+impl GsonVisitor {
     fn new() -> Self {
         Self {
             marker: PhantomData,
@@ -262,8 +262,8 @@ impl<T: Debug + Clone> GsonVisitor<T> {
     }
 }
 
-impl<'de, T: Deserialize<'de> + Debug + Clone> Visitor<'de> for GsonVisitor<T> {
-    type Value = GsonV2<T>;
+impl<'de> Visitor<'de> for GsonVisitor {
+    type Value = GsonV2;
 
     fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
         formatter.write_str("a valid GsonV2 value")
@@ -361,7 +361,7 @@ impl<'de, T: Deserialize<'de> + Debug + Clone> Visitor<'de> for GsonVisitor<T> {
                         return Err(serde::de::Error::missing_field("@value"));
                     }
                     "g:VertexProperty" => {
-                        if let Some(("@value", v)) = map.next_entry::<&str, VertexProperty<T>>()? {
+                        if let Some(("@value", v)) = map.next_entry::<&str, VertexProperty>()? {
                             map.next_entry::<(), ()>()?;
                             return Ok(GsonV2::VertexProperty(v));
                         }
@@ -417,7 +417,7 @@ impl<'de, T: Deserialize<'de> + Debug + Clone> Visitor<'de> for GsonVisitor<T> {
                         return Err(serde::de::Error::missing_field("@value"));
                     }
                     "g:Property" => {
-                        if let Some(("@value", v)) = map.next_entry::<&str, Property<T>>()? {
+                        if let Some(("@value", v)) = map.next_entry::<&str, Property>()? {
                             map.next_entry::<(), ()>()?;
                             return Ok(GsonV2::Property(v));
                         }
@@ -437,127 +437,127 @@ impl<'de, T: Deserialize<'de> + Debug + Clone> Visitor<'de> for GsonVisitor<T> {
     }
 }
 
-impl<T: Debug + Clone> From<time::Duration> for GsonV2<T> {
+impl From<time::Duration> for GsonV2 {
     fn from(v: std::time::Duration) -> Self {
         Self::Timestamp(v.as_millis() as i64)
     }
 }
 
-impl<T: Debug + Clone> From<time::SystemTime> for GsonV2<T> {
+impl From<time::SystemTime> for GsonV2 {
     fn from(v: time::SystemTime) -> Self {
         Self::Date(v.duration_since(time::UNIX_EPOCH).unwrap().as_millis() as i64)
     }
 }
 
-impl<T: Debug + Clone> From<f64> for GsonV2<T> {
+impl From<f64> for GsonV2 {
     fn from(v: f64) -> Self {
         Self::Double(v)
     }
 }
 
-impl<T: Debug + Clone> From<f32> for GsonV2<T> {
+impl From<f32> for GsonV2 {
     fn from(v: f32) -> Self {
         Self::Float(v)
     }
 }
 
-impl<T: Debug + Clone> From<i32> for GsonV2<T> {
+impl From<i32> for GsonV2 {
     fn from(v: i32) -> Self {
         Self::Integer(v)
     }
 }
 
-impl<T: Debug + Clone> From<i64> for GsonV2<T> {
+impl From<i64> for GsonV2 {
     fn from(v: i64) -> Self {
         Self::Long(v)
     }
 }
 
-impl<T: Debug + Clone> From<Uuid> for GsonV2<T> {
+impl From<Uuid> for GsonV2 {
     fn from(v: Uuid) -> Self {
         Self::UUID(v)
     }
 }
 
-impl<T: Debug + Clone> From<Vertex> for GsonV2<T> {
+impl From<Vertex> for GsonV2 {
     fn from(v: Vertex) -> Self {
         Self::Vertex(v)
     }
 }
 
-impl<T: Debug + Clone> From<VertexProperty<T>> for GsonV2<T> {
-    fn from(v: VertexProperty<T>) -> Self {
+impl From<VertexProperty> for GsonV2 {
+    fn from(v: VertexProperty) -> Self {
         Self::VertexProperty(v)
     }
 }
 
-impl<T: Debug + Clone> From<Property<T>> for GsonV2<T> {
-    fn from(v: Property<T>) -> Self {
+impl From<Property> for GsonV2 {
+    fn from(v: Property) -> Self {
         Self::Property(v)
     }
 }
 
-impl<T: Debug + Clone> From<String> for GsonV2<T> {
+impl From<String> for GsonV2 {
     fn from(s: String) -> Self {
         Self::String(s)
     }
 }
 
-impl<T: Debug + Clone> From<&str> for GsonV2<T> {
+impl From<&str> for GsonV2 {
     fn from(s: &str) -> Self {
         Self::String(s.to_string())
     }
 }
 
-impl<T: Debug + Clone> From<bool> for GsonV2<T> {
+impl From<bool> for GsonV2 {
     fn from(s: bool) -> Self {
         Self::Bool(s)
     }
 }
 
-impl<T: Debug + Clone> From<Option<()>> for GsonV2<T> {
+impl From<Option<()>> for GsonV2 {
     fn from(_: Option<()>) -> Self {
         Self::Null
     }
 }
 
-impl<T: Debug + Clone> From<Cardinality> for GsonV2<T> {
+impl From<Cardinality> for GsonV2 {
     fn from(c: Cardinality) -> Self {
         Self::Cardinality(c)
     }
 }
 
-impl<T: Debug + Clone> From<Operator> for GsonV2<T> {
+impl From<Operator> for GsonV2 {
     fn from(c: Operator) -> Self {
         Self::Operator(c)
     }
 }
 
-impl<T: Debug + Clone> From<Order> for GsonV2<T> {
+impl From<Order> for GsonV2 {
     fn from(c: Order) -> Self {
         Self::Order(c)
     }
 }
 
-impl<T: Debug + Clone> From<P> for GsonV2<T> {
+impl From<P> for GsonV2 {
     fn from(p: P) -> Self {
         Self::Predicate(p)
     }
 }
 
-impl<T: Debug + Clone> From<TextP> for GsonV2<T> {
+impl From<TextP> for GsonV2 {
     fn from(p: TextP) -> Self {
         Self::TextPredicate(p)
     }
 }
 
-impl<T: Debug + Clone> From<bytecode::Bytecode> for GsonV2<T> {
+impl From<bytecode::Bytecode> for GsonV2 {
     fn from(b: bytecode::Bytecode) -> Self {
         Self::Bytecode(b)
     }
 }
 
-impl<T: Debug + Clone> From<Traversal> for GsonV2<T> {
+impl From<Traversal> for GsonV2 {
     fn from(t: Traversal) -> Self {
         let b: bytecode::Bytecode = t.into();
         b.into()

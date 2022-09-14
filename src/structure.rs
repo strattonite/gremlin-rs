@@ -22,14 +22,14 @@ pub struct Vertex {
 }
 
 #[derive(Deserialize, Debug, Serialize, Clone)]
-pub struct VertexProperty<T: Clone> {
+pub struct VertexProperty {
     pub id: i64,
     pub label: String,
-    pub value: T,
+    pub value: Box<gson::GsonV2>,
 }
 
 #[derive(Deserialize, Debug, Serialize, Clone)]
-pub struct Property<T: Clone> {
+pub struct Property {
     pub key: String,
-    pub value: T,
+    pub value: Box<gson::GsonV2>,
 }
