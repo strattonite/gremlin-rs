@@ -71,8 +71,9 @@ mod tests {
             .unwrap()
             .unwrap();
 
-            println!("testing nested response parsing");
-            let v: HashMap<String, Vec<gson::GsonV2>> = result.parse().unwrap().remove(0);
+            println!("testing double nested response parsing");
+            let v: HashMap<String, HashMap<String, Vec<gson::GsonV2>>> =
+                result.parse().unwrap().remove(0);
             for (k, v) in v.iter() {
                 println!("{}:\n{}", k, to_string_pretty(&v).unwrap());
             }
