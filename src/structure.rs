@@ -4,10 +4,10 @@ pub mod gson;
 use serde::*;
 use uuid::Uuid;
 
-#[derive(Deserialize, Debug, Serialize, Clone, PartialEq, Eq, Hash)]
+#[derive(Deserialize, Debug, Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Edge {
-    pub id: Uuid,
+    pub id: Box<gson::GsonV2>,
     pub label: String,
     pub in_v_label: String,
     pub out_v_label: String,
@@ -15,9 +15,9 @@ pub struct Edge {
     pub out_v: Uuid,
 }
 
-#[derive(Deserialize, Debug, Serialize, Clone, PartialEq, Eq, Hash)]
+#[derive(Deserialize, Debug, Serialize, Clone)]
 pub struct Vertex {
-    pub id: Uuid,
+    pub id: Box<gson::GsonV2>,
     pub label: String,
 }
 

@@ -91,6 +91,24 @@ mod tests {
 
             let v: gson::GsonV2 = result.parse().unwrap().remove(0);
             println!("{:?}", v);
+
+            let result = timeout(
+                Duration::from_secs(5),
+                g.E(())
+                    .sample(25)
+                    .group(())
+                    .by(__.label())
+                    .by(__.propertyMap(()))
+                    .to_list(&client),
+            )
+            .await
+            .unwrap()
+            .unwrap();
+
+            println!("testing generic edge response parsing");
+
+            let v: gson::GsonV2 = result.parse().unwrap().remove(0);
+            println!("{:?}", v);
         } else {
             println!("integration test not run, missing TEST_URL env var")
         }
