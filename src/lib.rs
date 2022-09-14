@@ -115,6 +115,7 @@ mod tests {
                 .outE(())
                 .inV(())
                 .path()
+                .limit(5)
                 .to_list(&client)
                 .await
                 .unwrap();
