@@ -53,7 +53,26 @@ mod tests {
             .unwrap();
 
             println!("testing nested response parsing");
-            let v: HashMap<String, Vec<gson::GsonGraph>> = result.parse().unwrap().remove(0);
+            let v: HashMap<String, Vec<gson::GsonV2>> = result.parse().unwrap().remove(0);
+            for (k, v) in v.iter() {
+                println!("{}:\n{}", k, to_string_pretty(&v).unwrap());
+            }
+
+            let result = timeout(
+                Duration::from_secs(5),
+                g.V(())
+                    .sample((25,))
+                    .group(())
+                    .by(__.label())
+                    .by(__.propertyMap(()))
+                    .to_list(&client),
+            )
+            .await
+            .unwrap()
+            .unwrap();
+
+            println!("testing nested response parsing");
+            let v: HashMap<String, Vec<gson::GsonV2>> = result.parse().unwrap().remove(0);
             for (k, v) in v.iter() {
                 println!("{}:\n{}", k, to_string_pretty(&v).unwrap());
             }

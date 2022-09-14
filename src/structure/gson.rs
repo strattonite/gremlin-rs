@@ -1,7 +1,4 @@
-use super::{
-    de::{from_vec, GsonError},
-    *,
-};
+use super::*;
 use crate::process::*;
 use serde::{de::*, ser::*};
 use std::{fmt::Debug, marker::PhantomData, time};
@@ -128,27 +125,6 @@ pub enum GsonV2 {
     Order(Order),
     Bytecode(bytecode::Bytecode),
 }
-
-// impl TryInto<Vec<u8>> for GsonV2  {
-//     type Error = serde_json::Error;
-//     fn try_into(self) -> Result<Vec<u8>, Self::Error> {
-//         serde_json::to_vec(&self)
-//     }
-// }
-
-// impl TryFrom<Vec<u8>> for GsonV2  {
-//     type Error = GsonError;
-//     fn try_from(v: Vec<u8>) -> Result<Self, Self::Error> {
-//         from_vec::<Self>(&v)
-//     }
-// }
-
-// impl<'de> TryFrom<&'de Vec<u8>> for GsonV2  {
-//     type Error = GsonError;
-//     fn try_from(v: &'de Vec<u8>) -> Result<Self, Self::Error> {
-//         from_vec::<Self>(&v)
-//     }
-// }
 
 impl Serialize for GsonV2 {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
