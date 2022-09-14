@@ -768,9 +768,11 @@ impl<'de, 'a> SeqAccess<'de> for CommaSeparated<'a, 'de> {
             _ => {
                 if self.first {
                     let t = self.check_traverser && self.de.unwrap_traverser()?;
+                    let d = self.de.data_depth;
                     if t {
                         println!(
-                            "unwrapped traverser, deserializing value: {}",
+                            "({}) unwrapped traverser, deserializing value: {}",
+                            d,
                             self.de
                                 .peek_next(50)
                                 .map(|x| from_utf8(x).unwrap())
@@ -780,6 +782,14 @@ impl<'de, 'a> SeqAccess<'de> for CommaSeparated<'a, 'de> {
                     let val = seed.deserialize(&mut *self.de).map(Some);
 
                     if t {
+                        println!(
+                            "({}) deserialized val, remaining input: {}",
+                            d,
+                            self.de
+                                .peek_next(50)
+                                .map(|x| from_utf8(x).unwrap())
+                                .unwrap_or("invalid len")
+                        );
                         match self.de.take_next(2)? {
                             b"}}" => (),
                             x => return Err(GsonError::invalid_str("}}", x)),
